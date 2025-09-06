@@ -1,36 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Grityt: Track you</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>GRIT: Track you</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/dist/phosphor.js"></script>
   <style>
-    body {
-      touch-action: pan-y;
-      -webkit-tap-highlight-color: transparent;
-      font-family: 'Inter', sans-serif;
-    }
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-    }
-    .chart-container {
-      position: relative;
-      width: 100%;
-      height: 300px;
-    }
+    body { touch-action: pan-y; -webkit-tap-highlight-color: transparent; font-family: 'Inter', sans-serif; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .chart-container { position: relative; width: 100%; height: 300px; }
   </style>
 </head>
 <body class="bg-gray-900 text-gray-200 font-sans p-4 flex flex-col min-h-screen">
@@ -158,19 +141,17 @@
           <form id="log-progress-form" class="space-y-4">
             <div>
               <label for="progress-date" class="block text-sm font-medium text-gray-400">Date</label>
-              <input type="date" id="progress-date" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600 focus:border-lime-400 focus:ring focus:ring-lime-400 focus:ring-opacity-50" required>
+              <input type="date" id="progress-date" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600 focus:border-lime-400 focus:ring focus:ring-lime-400 focus:ring-opacity-50" required />
             </div>
             <div>
               <label for="progress-weight" class="block text-sm font-medium text-gray-400">Weight (kg)</label>
-              <input type="number" step="0.1" id="progress-weight" placeholder="e.g., 75.5" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600 focus:border-lime-400 focus:ring focus:ring-lime-400 focus:ring-opacity-50" required>
+              <input type="number" step="0.1" id="progress-weight" placeholder="e.g., 75.5" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600 focus:border-lime-400 focus:ring focus:ring-lime-400 focus:ring-opacity-50" required />
             </div>
             <div>
               <label for="progress-photo" class="block text-sm font-medium text-gray-400">Photo Link</label>
-              <input type="text" id="progress-photo" placeholder="Optional URL" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600 focus:border-lime-400 focus:ring focus:ring-lime-400 focus:ring-opacity-50">
+              <input type="text" id="progress-photo" placeholder="Optional URL" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600 focus:border-lime-400 focus:ring focus:ring-lime-400 focus:ring-opacity-50" />
             </div>
-            <button type="submit" class="w-full bg-lime-400 text-gray-900 font-bold py-2 rounded-lg transition hover:bg-lime-300">
-              Save Progress
-            </button>
+            <button type="submit" class="w-full bg-lime-400 text-gray-900 font-bold py-2 rounded-lg transition hover:bg-lime-300">Save Progress</button>
           </form>
         </div>
       </div>
@@ -198,11 +179,17 @@
   </nav>
 
   <script>
-    const appsScriptURL = 'https://script.google.com/macros/s/AKfycbydyk0XivKInvIAwCOJSVlLP3jUu93t8bqfFVZ9c1YUuGt4hh1x88ZSS17x-zu7-vY/exec';
+    // ==================== CONFIG ====================
+    // 🔁 Replace with your CURRENT web app /exec URL after deploying with access = Anyone
+    const appsScriptURL = 'PASTE_YOUR_AppsScript_/exec_URL_HERE';
+
+    // ==================== STATE ====================
     let appData = {};
     let chartInstance;
     const today = new Date().toISOString().slice(0, 10);
     const sections = ['dashboard', 'workout', 'diet', 'progress'];
+
+    // Nav refs
     const navItems = {
       dashboard: document.getElementById('nav-dashboard'),
       workout: document.getElementById('nav-workout'),
@@ -217,7 +204,7 @@
     const modalForm = document.getElementById('modal-form');
     const modalButtons = document.getElementById('modal-buttons');
 
-    // Function to show custom modal
+    // ==================== UTIL: MODAL ====================
     function showModal(title, message, formHtml = '', buttonsHtml = '') {
       modalTitle.textContent = title;
       modalMessage.textContent = message;
@@ -227,23 +214,37 @@
       modalContainer.classList.remove('hidden');
       modalContainer.classList.add('flex');
     }
-
-    // Function to hide modal
     function hideModal() {
       modalContainer.classList.remove('flex');
       modalContainer.classList.add('hidden');
     }
 
-    // Generic post data function
+    // ==================== UTIL: LOADING ====================
+    function showLoading(show) {
+      const el = document.getElementById('loading-screen');
+      el.style.opacity = show ? '1' : '0';
+      el.style.visibility = show ? 'visible' : 'hidden';
+    }
+
+    // ==================== FETCH HELPERS ====================
+    // Form-encoded POST to avoid CORS preflight
     async function postData(payload) {
       showLoading(true);
       try {
-        const response = await fetch(`${appsScriptURL}?action=${payload.action}`, {
+        const body = new URLSearchParams();
+        body.set('action', payload.action);
+        body.set('data', JSON.stringify(payload));
+
+        const response = await fetch(appsScriptURL, {
           method: 'POST',
-          body: JSON.stringify(payload),
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body
         });
-        const data = await response.json();
+
+        const text = await response.text();
+        let data;
+        try { data = JSON.parse(text); } catch { throw new Error('Non-JSON response (check deployment access/URL)'); }
+
         if (!data.success) {
           showModal('Error', `Error logging data: ${data.error}`, '', `<button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
         }
@@ -255,12 +256,16 @@
       }
     }
 
-    // Fetch data from Google Apps Script
     async function fetchData() {
       showLoading(true);
       try {
-        const response = await fetch(`${appsScriptURL}?action=getDashboardData`);
-        const data = await response.json();
+        const url = `${appsScriptURL}?action=getDashboardData&cb=${Date.now()}`; // cache-bust
+        console.log('Attempting to fetch data from URL:', url);
+        const response = await fetch(url);
+        const text = await response.text();
+        let data;
+        try { data = JSON.parse(text); } catch { throw new Error('Non-JSON response (check deployment access/URL)'); }
+
         if (data.success) {
           appData = data;
           console.log('Data fetched:', appData);
@@ -269,14 +274,14 @@
           showModal('Error', `Error fetching data: ${data.error}`, '', `<button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
         }
       } catch (error) {
+        console.error('Fetch operation failed:', error);
         showModal('Connection Error', 'Could not connect to Google Apps Script. Please check the URL and deployment permissions.', '', `<button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
-        console.error('Error fetching data:', error);
       } finally {
         showLoading(false);
       }
     }
 
-    // Render all app sections
+    // ==================== RENDERERS ====================
     function renderApp() {
       renderDashboard();
       renderWorkoutSection();
@@ -284,16 +289,14 @@
       renderProgressSection();
     }
 
-    // Toggle loading screen
-    function showLoading(show) {
-      document.getElementById('loading-screen').style.opacity = show ? '1' : '0';
-      document.getElementById('loading-screen').style.visibility = show ? 'visible' : 'hidden';
+    function dayNameToIndex(name) {
+      const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
+      return map[String(name || '').toLowerCase()] ?? -1;
     }
 
-    // Render Dashboard Tab
     function renderDashboard() {
-      const goals = appData.goals.reduce((acc, g) => ({ ...acc, [g['Goal Name']]: g.Value }), {});
-      const dietLog = appData.dietLog.filter(log => log.Date === today);
+      const goals = (appData.goals || []).reduce((acc, g) => ({ ...acc, [g['Goal Name']]: g.Value }), {});
+      const dietLog = (appData.dietLog || []).filter(log => log.Date === today);
       const todayProtein = dietLog.reduce((sum, log) => sum + (parseFloat(log['Logged Protein (g)']) || 0), 0);
       const totalProteinGoal = parseFloat(goals['Daily Protein Goal (g)']) || 0;
       const proteinProgressPercent = totalProteinGoal > 0 ? (todayProtein / totalProteinGoal) * 100 : 0;
@@ -301,11 +304,10 @@
       document.getElementById('protein-progress-text').textContent = `${Math.round(todayProtein)}g / ${totalProteinGoal}g`;
       document.getElementById('protein-progress-bar').style.width = `${Math.min(proteinProgressPercent, 100)}%`;
 
-      const workoutPlanToday = appData.workoutPlan.find(p => {
-        const planDay = new Date(p.Day).getDay();
-        const todayDay = new Date().getDay();
-        return planDay === todayDay;
-      });
+      const todayIndex = new Date().getDay();
+      const planArr = appData.workoutPlan || [];
+      const workoutPlanToday = planArr.find(p => dayNameToIndex(p.Day) === todayIndex);
+
       const workoutPlanList = document.getElementById('daily-workout-plan');
       workoutPlanList.innerHTML = '';
       if (workoutPlanToday) {
@@ -319,6 +321,7 @@
       } else {
         workoutPlanList.innerHTML = '<p>No workout planned for today.</p>';
       }
+
       const recentPRs = findRecentPRs();
       const prsDiv = document.getElementById('recent-prs');
       prsDiv.innerHTML = '';
@@ -331,19 +334,18 @@
       }
     }
 
-    // Render Workout Tab
     function renderWorkoutSection() {
       const workoutLogList = document.getElementById('workout-log-list');
       workoutLogList.innerHTML = '';
-      if (appData.workouts.length > 0) {
-        const sortedWorkouts = appData.workouts.sort((a, b) => new Date(b.Date) - new Date(a.Date));
-        sortedWorkouts.forEach(log => {
+      const workouts = (appData.workouts || []).slice().sort((a, b) => new Date(b.Date) - new Date(a.Date));
+      if (workouts.length > 0) {
+        workouts.forEach(log => {
           const workoutCard = document.createElement('div');
           workoutCard.className = 'bg-gray-800 rounded-lg p-4 shadow-md';
           workoutCard.innerHTML = `
             <h4 class="font-bold text-lime-400">${log.Date} - ${log.Exercise}</h4>
             <p>Sets: ${log.Sets}, Reps: ${log.Reps}, Weight: ${log['Weight (kg)']}kg</p>
-            <p class="text-sm text-gray-400">Notes: ${log.Notes}</p>
+            <p class="text-sm text-gray-400">Notes: ${log.Notes || ''}</p>
           `;
           workoutLogList.appendChild(workoutCard);
         });
@@ -352,16 +354,15 @@
       }
     }
 
-    // Render Diet Tab
     function renderDietSection() {
-      const goals = appData.goals.reduce((acc, g) => ({ ...acc, [g['Goal Name']]: g.Value }), {});
-      const dietLog = appData.dietLog.filter(log => log.Date === today);
+      const goals = (appData.goals || []).reduce((acc, g) => ({ ...acc, [g['Goal Name']]: g.Value }), {});
+      const dietLog = (appData.dietLog || []).filter(log => log.Date === today);
       const todayProtein = dietLog.reduce((sum, log) => sum + (parseFloat(log['Logged Protein (g)']) || 0), 0);
       const todayCarbs = dietLog.reduce((sum, log) => sum + (parseFloat(log['Logged Carbs (g)']) || 0), 0);
       const todayFats = dietLog.reduce((sum, log) => sum + (parseFloat(log['Logged Fats (g)']) || 0), 0);
       const todayCalories = dietLog.reduce((sum, log) => sum + (parseFloat(log['Logged Calories']) || 0), 0);
 
-      document.getElementById('protein-today').textContent = `${Math.round(todayProtein)}g / ${goals['Daily Protein Goal (g)']}g`;
+      document.getElementById('protein-today').textContent = `${Math.round(todayProtein)}g / ${goals['Daily Protein Goal (g)'] || 0}g`;
       document.getElementById('carbs-today').textContent = `${Math.round(todayCarbs)}g`;
       document.getElementById('fats-today').textContent = `${Math.round(todayFats)}g`;
       document.getElementById('calories-today').textContent = `${Math.round(todayCalories)} kcal`;
@@ -369,7 +370,7 @@
 
       const savedMealsList = document.getElementById('quick-add-meals');
       savedMealsList.innerHTML = '';
-      appData.savedMeals.forEach(meal => {
+      (appData.savedMeals || []).forEach(meal => {
         const button = document.createElement('button');
         button.className = 'bg-gray-700 text-gray-200 py-3 rounded-lg shadow-md hover:bg-gray-600 transition';
         button.textContent = meal['Meal Name'];
@@ -394,15 +395,14 @@
       }
     }
 
-    // Render Progress Tab
     function renderProgressSection() {
-      const progressData = appData.progress.filter(d => d['Weight (kg)']).sort((a, b) => new Date(a.Date) - new Date(b.Date));
+      const progressData = (appData.progress || [])
+        .filter(d => d['Weight (kg)'])
+        .sort((a, b) => new Date(a.Date) - new Date(b.Date));
       const labels = progressData.map(d => d.Date);
       const weights = progressData.map(d => parseFloat(d['Weight (kg)']));
 
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
+      if (chartInstance) chartInstance.destroy();
 
       const ctx = document.getElementById('weight-chart').getContext('2d');
       chartInstance = new Chart(ctx, {
@@ -415,190 +415,29 @@
             borderColor: 'rgb(134, 239, 172)',
             backgroundColor: 'rgba(134, 239, 172, 0.2)',
             tension: 0.1,
-            fill: true
-          }]
+            fill: true,
+          }],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           scales: {
-            x: {
-              ticks: { color: 'white' },
-              grid: { color: 'rgba(255,255,255,0.1)' }
-            },
-            y: {
-              ticks: { color: 'white' },
-              grid: { color: 'rgba(255,255,255,0.1)' }
-            }
+            x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+            y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } },
           },
-          plugins: {
-            legend: {
-              labels: { color: 'white' }
-            }
-          }
-        }
+          plugins: { legend: { labels: { color: 'white' } } },
+        },
       });
     }
 
-    // Find and log a workout with a modal form
-    function logWorkout() {
-      showModal('Log Workout', 'Enter your workout details:', `
-        <div>
-          <label for="modal-exercise" class="block text-sm font-medium text-gray-400">Exercise</label>
-          <input type="text" id="modal-exercise" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required>
-        </div>
-        <div>
-          <label for="modal-sets" class="block text-sm font-medium text-gray-400">Sets</label>
-          <input type="number" id="modal-sets" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required>
-        </div>
-        <div>
-          <label for="modal-reps" class="block text-sm font-medium text-gray-400">Reps</label>
-          <input type="number" id="modal-reps" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required>
-        </div>
-        <div>
-          <label for="modal-weight" class="block text-sm font-medium text-gray-400">Weight (kg)</label>
-          <input type="number" step="0.1" id="modal-weight" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required>
-        </div>
-        <div>
-          <label for="modal-notes" class="block text-sm font-medium text-gray-400">Notes (optional)</label>
-          <input type="text" id="modal-notes" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600">
-        </div>
-      `, `<button type="submit" form="modal-form" class="bg-lime-400 text-gray-900 font-bold py-2 px-4 rounded-lg">Save</button>
-      <button type="button" class="bg-gray-700 text-gray-200 font-bold py-2 px-4 rounded-lg" onclick="hideModal()">Cancel</button>
-      `);
-
-      document.getElementById('modal-form').onsubmit = async (event) => {
-        event.preventDefault();
-        const exercise = document.getElementById('modal-exercise').value;
-        const sets = document.getElementById('modal-sets').value;
-        const reps = document.getElementById('modal-reps').value;
-        const weight = document.getElementById('modal-weight').value;
-        const notes = document.getElementById('modal-notes').value;
-
-        const payload = {
-          action: 'logWorkout',
-          date: today,
-          exercise: exercise,
-          sets: sets,
-          reps: reps,
-          weight: weight,
-          notes: notes
-        };
-        await postData(payload);
-        hideModal();
-        fetchData();
-      };
-    }
-
-    // Log a saved meal
-    async function logSavedMeal(meal) {
-      showModal('Logging Meal', `Logging "${meal['Meal Name']}" to your diet log...`, '', '');
-      const savedMealContents = JSON.parse(meal['Contents (JSON)']);
-      const foodLibrary = appData.foodLibrary;
-      const mealsToLog = savedMealContents.map(savedFood => {
-        const foodItem = foodLibrary.find(f => f['Food Item'] === savedFood['Food Item']);
-        if (!foodItem) {
-          console.error(`Food item not found in library: ${savedFood['Food Item']}`);
-          return null;
-        }
-        return {
-          mealType: 'Saved Meal',
-          foodItem: foodItem['Food Item'],
-          quantity: savedFood.Quantity,
-          protein: parseFloat(foodItem['Protein (g)']) * savedFood.Quantity,
-          carbs: parseFloat(foodItem['Carbs (g)']) * savedFood.Quantity,
-          fats: parseFloat(foodItem['Fats (g)']) * savedFood.Quantity,
-          calories: parseFloat(foodItem.Calories) * savedFood.Quantity
-        };
-      }).filter(Boolean);
-
-      const payload = {
-        action: 'logDiet',
-        date: today,
-        meals: mealsToLog
-      };
-      await postData(payload);
-      hideModal();
-      fetchData();
-    }
-
-    // Add a food item manually
-    function addFoodItem() {
-      showModal('Add Food Item', 'Enter food from your Food Library and quantity:', `
-        <div>
-          <label for="modal-food-item" class="block text-sm font-medium text-gray-400">Food Name</label>
-          <input type="text" id="modal-food-item" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required>
-        </div>
-        <div>
-          <label for="modal-quantity" class="block text-sm font-medium text-gray-400">Quantity</label>
-          <input type="number" step="0.1" id="modal-quantity" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required>
-        </div>
-      `, `<button type="submit" form="modal-form" class="bg-lime-400 text-gray-900 font-bold py-2 px-4 rounded-lg">Add</button>
-      <button type="button" class="bg-gray-700 text-gray-200 font-bold py-2 px-4 rounded-lg" onclick="hideModal()">Cancel</button>
-      `);
-
-      document.getElementById('modal-form').onsubmit = async (event) => {
-        event.preventDefault();
-        const foodItem = document.getElementById('modal-food-item').value;
-        const quantity = document.getElementById('modal-quantity').value;
-        const food = appData.foodLibrary.find(f => f['Food Item'].toLowerCase() === foodItem.toLowerCase());
-        if (!food) {
-          showModal('Error', 'Food item not found in your Food Library. Please check spelling.', '', `<button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
-          return;
-        }
-
-        const mealToLog = [{
-          mealType: 'Manual',
-          foodItem: food['Food Item'],
-          quantity: parseFloat(quantity),
-          protein: parseFloat(food['Protein (g)']) * parseFloat(quantity),
-          carbs: parseFloat(food['Carbs (g)']) * parseFloat(quantity),
-          fats: parseFloat(food['Fats (g)']) * parseFloat(quantity),
-          calories: parseFloat(food.Calories) * parseFloat(quantity)
-        }];
-
-        const payload = {
-          action: 'logDiet',
-          date: today,
-          meals: mealToLog
-        };
-        await postData(payload);
-        hideModal();
-        fetchData();
-      };
-    }
-
-    // Log progress form submission
-    async function logProgress(event) {
-      event.preventDefault();
-      const form = event.target;
-      const weight = form['progress-weight'].value;
-      const date = form['progress-date'].value;
-      const photo = form['progress-photo'].value || '';
-
-      const payload = {
-        action: 'logProgress',
-        date: date,
-        weight: parseFloat(weight),
-        chest: '',
-        waist: '',
-        hips: '',
-        photo: photo,
-        notes: ''
-      };
-
-      await postData(payload);
-      form.reset();
-      fetchData();
-    }
-
-    // Progressive overload logic to find recent PRs
+    // ==================== FEATURES ====================
     function findRecentPRs() {
       const prs = {};
-      appData.workouts.forEach(workout => {
+      (appData.workouts || []).forEach(workout => {
         const exercise = workout.Exercise;
         const weight = parseFloat(workout['Weight (kg)']);
         const reps = parseInt(workout.Reps, 10);
+        if (!exercise) return;
         if (prs[exercise]) {
           if (weight > prs[exercise].Weight || (weight === prs[exercise].Weight && reps > prs[exercise].Reps)) {
             prs[exercise] = { ...workout, Weight: weight, Reps: reps };
@@ -610,26 +449,141 @@
       return Object.values(prs).sort((a, b) => new Date(b.Date) - new Date(a.Date)).slice(0, 5);
     }
 
-    // Event listeners
-    document.getElementById('log-workout-btn').addEventListener('click', logWorkout);
-    document.getElementById('log-meal-btn').addEventListener('click', addFoodItem);
-    document.getElementById('log-progress-form').addEventListener('submit', logProgress);
-    document.getElementById('nav-dashboard').addEventListener('click', () => switchTab('dashboard'));
-    document.getElementById('nav-workout').addEventListener('click', () => switchTab('workout'));
-    document.getElementById('nav-diet').addEventListener('click', () => switchTab('diet'));
-    document.getElementById('nav-progress').addEventListener('click', () => switchTab('progress'));
+    function logWorkout() {
+      showModal('Log Workout', 'Enter your workout details:', `
+        <div>
+          <label for="modal-exercise" class="block text-sm font-medium text-gray-400">Exercise</label>
+          <input type="text" id="modal-exercise" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+        </div>
+        <div>
+          <label for="modal-sets" class="block text-sm font-medium text-gray-400">Sets</label>
+          <input type="number" id="modal-sets" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+        </div>
+        <div>
+          <label for="modal-reps" class="block text-sm font-medium text-gray-400">Reps</label>
+          <input type="number" id="modal-reps" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+        </div>
+        <div>
+          <label for="modal-weight" class="block text-sm font-medium text-gray-400">Weight (kg)</label>
+          <input type="number" step="0.1" id="modal-weight" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+        </div>
+        <div>
+          <label for="modal-notes" class="block text-sm font-medium text-gray-400">Notes (optional)</label>
+          <input type="text" id="modal-notes" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" />
+        </div>
+      `, `<button type="submit" form="modal-form" class="bg-lime-400 text-gray-900 font-bold py-2 px-4 rounded-lg">Save</button>
+      <button type="button" class="bg-gray-700 text-gray-200 font-bold py-2 px-4 rounded-lg" onclick="hideModal()">Cancel</button>`);
 
-    // Switch between tabs
+      document.getElementById('modal-form').onsubmit = async (event) => {
+        event.preventDefault();
+        const exercise = document.getElementById('modal-exercise').value;
+        const sets = document.getElementById('modal-sets').value;
+        const reps = document.getElementById('modal-reps').value;
+        const weight = document.getElementById('modal-weight').value;
+        const notes = document.getElementById('modal-notes').value;
+
+        const payload = { action: 'logWorkout', date: today, exercise, sets, reps, weight, notes };
+        await postData(payload);
+        hideModal();
+        fetchData();
+      };
+    }
+
+    async function logSavedMeal(meal) {
+      showModal('Logging Meal', `Logging "${meal['Meal Name']}" to your diet log...`);
+      const savedMealContents = JSON.parse(meal['Contents (JSON)'] || '[]');
+      const foodLibrary = appData.foodLibrary || [];
+      const mealsToLog = savedMealContents.map(savedFood => {
+        const foodItem = foodLibrary.find(f => f['Food Item'] === savedFood['Food Item']);
+        if (!foodItem) return null;
+        return {
+          mealType: 'Saved Meal',
+          foodItem: foodItem['Food Item'],
+          quantity: savedFood.Quantity,
+          protein: parseFloat(foodItem['Protein (g)']) * savedFood.Quantity,
+          carbs: parseFloat(foodItem['Carbs (g)']) * savedFood.Quantity,
+          fats: parseFloat(foodItem['Fats (g)']) * savedFood.Quantity,
+          calories: parseFloat(foodItem.Calories) * savedFood.Quantity,
+        };
+      }).filter(Boolean);
+
+      const payload = { action: 'logDiet', date: today, meals: mealsToLog };
+      await postData(payload);
+      hideModal();
+      fetchData();
+    }
+
+    function addFoodItem() {
+      showModal('Add Food Item', 'Enter food from your Food Library and quantity:', `
+        <div>
+          <label for="modal-food-item" class="block text-sm font-medium text-gray-400">Food Name</label>
+          <input type="text" id="modal-food-item" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+        </div>
+        <div>
+          <label for="modal-quantity" class="block text-sm font-medium text-gray-400">Quantity</label>
+          <input type="number" step="0.1" id="modal-quantity" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+        </div>
+      `, `<button type="submit" form="modal-form" class="bg-lime-400 text-gray-900 font-bold py-2 px-4 rounded-lg">Add</button>
+      <button type="button" class="bg-gray-700 text-gray-200 font-bold py-2 px-4 rounded-lg" onclick="hideModal()">Cancel</button>`);
+
+      document.getElementById('modal-form').onsubmit = async (event) => {
+        event.preventDefault();
+        const foodItemName = document.getElementById('modal-food-item').value;
+        const quantity = parseFloat(document.getElementById('modal-quantity').value);
+        const food = (appData.foodLibrary || []).find(f => String(f['Food Item'] || '').toLowerCase() === String(foodItemName || '').toLowerCase());
+        if (!food) {
+          showModal('Error', 'Food item not found in your Food Library. Please check spelling.', '', `<button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
+          return;
+        }
+
+        const mealToLog = [{
+          mealType: 'Manual',
+          foodItem: food['Food Item'],
+          quantity,
+          protein: parseFloat(food['Protein (g)']) * quantity,
+          carbs: parseFloat(food['Carbs (g)']) * quantity,
+          fats: parseFloat(food['Fats (g)']) * quantity,
+          calories: parseFloat(food.Calories) * quantity,
+        }];
+
+        const payload = { action: 'logDiet', date: today, meals: mealToLog };
+        await postData(payload);
+        hideModal();
+        fetchData();
+      };
+    }
+
+    async function logProgress(event) {
+      event.preventDefault();
+      const form = event.target;
+      const weight = form['progress-weight'].value;
+      const date = form['progress-date'].value;
+      const photo = form['progress-photo'].value || '';
+
+      const payload = { action: 'logProgress', date, weight: parseFloat(weight), chest: '', waist: '', hips: '', photo, notes: '' };
+      await postData(payload);
+      form.reset();
+      fetchData();
+    }
+
+    // ==================== NAV ====================
     function switchTab(tabId) {
-      const allTabs = document.querySelectorAll('.tab-content');
-      allTabs.forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
-      const allNavItems = document.querySelectorAll('.nav-item');
-      allNavItems.forEach(item => item.classList.remove('text-lime-400'));
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('text-lime-400'));
       document.getElementById(`nav-${tabId}`).classList.add('text-lime-400');
     }
 
-    // Initial data fetch on load
+    // ==================== EVENTS ====================
+    document.getElementById('log-workout-btn').addEventListener('click', logWorkout);
+    document.getElementById('log-meal-btn').addEventListener('click', addFoodItem);
+    document.getElementById('log-progress-form').addEventListener('submit', logProgress);
+    navItems.dashboard.addEventListener('click', () => switchTab('dashboard'));
+    navItems.workout.addEventListener('click', () => switchTab('workout'));
+    navItems.diet.addEventListener('click', () => switchTab('diet'));
+    navItems.progress.addEventListener('click', () => switchTab('progress'));
+
+    // ==================== INIT ====================
     document.addEventListener('DOMContentLoaded', fetchData);
   </script>
 </body>
