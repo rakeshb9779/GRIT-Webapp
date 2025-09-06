@@ -181,13 +181,12 @@
   <script>
     // ==================== CONFIG ====================
     // 🔁 Replace with your CURRENT web app /exec URL after deploying with access = Anyone
-    const appsScriptURL = 'PASTE_YOUR_AppsScript_/exec_URL_HERE';
+    const appsScriptURL = 'AKfycbydyk0XivKInvIAwCOJSVlLP3jUu93t8bqfFVZ9c1YUuGt4hh1x88ZSS17x-zu7-vY';
 
     // ==================== STATE ====================
     let appData = {};
     let chartInstance;
     const today = new Date().toISOString().slice(0, 10);
-    const sections = ['dashboard', 'workout', 'diet', 'progress'];
 
     // Nav refs
     const navItems = {
@@ -345,8 +344,7 @@
           workoutCard.innerHTML = `
             <h4 class="font-bold text-lime-400">${log.Date} - ${log.Exercise}</h4>
             <p>Sets: ${log.Sets}, Reps: ${log.Reps}, Weight: ${log['Weight (kg)']}kg</p>
-            <p class="text-sm text-gray-400">Notes: ${log.Notes || ''}</p>
-          `;
+            <p class="text-sm text-gray-400">Notes: ${log.Notes || ''}</p>`;
           workoutLogList.appendChild(workoutCard);
         });
       } else {
@@ -386,8 +384,7 @@
           logItem.className = 'bg-gray-800 rounded-lg p-3 shadow-md';
           logItem.innerHTML = `
             <p class="font-bold text-gray-200">${log['Food Item']} (${log.Quantity})</p>
-            <p class="text-sm text-gray-400">P: ${log['Logged Protein (g)']}g, C: ${log['Logged Carbs (g)']}g, F: ${log['Logged Fats (g)']}g</p>
-          `;
+            <p class="text-sm text-gray-400">P: ${log['Logged Protein (g)']}g, C: ${log['Logged Carbs (g)']}g, F: ${log['Logged Fats (g)']}g</p>`;
           dietLogList.appendChild(logItem);
         });
       } else {
@@ -452,27 +449,26 @@
     function logWorkout() {
       showModal('Log Workout', 'Enter your workout details:', `
         <div>
-          <label for="modal-exercise" class="block text-sm font-medium text-gray-400">Exercise</label>
-          <input type="text" id="modal-exercise" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+          <label for=\"modal-exercise\" class=\"block text-sm font-medium text-gray-400\">Exercise</label>
+          <input type=\"text\" id=\"modal-exercise\" class=\"w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600\" required />
         </div>
         <div>
-          <label for="modal-sets" class="block text-sm font-medium text-gray-400">Sets</label>
-          <input type="number" id="modal-sets" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+          <label for=\"modal-sets\" class=\"block text-sm font-medium text-gray-400\">Sets</label>
+          <input type=\"number\" id=\"modal-sets\" class=\"w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600\" required />
         </div>
         <div>
-          <label for="modal-reps" class="block text-sm font-medium text-gray-400">Reps</label>
-          <input type="number" id="modal-reps" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+          <label for=\"modal-reps\" class=\"block text-sm font-medium text-gray-400\">Reps</label>
+          <input type=\"number\" id=\"modal-reps\" class=\"w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600\" required />
         </div>
         <div>
-          <label for="modal-weight" class="block text-sm font-medium text-gray-400">Weight (kg)</label>
-          <input type="number" step="0.1" id="modal-weight" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+          <label for=\"modal-weight\" class=\"block text-sm font-medium text-gray-400\">Weight (kg)</label>
+          <input type=\"number\" step=\"0.1\" id=\"modal-weight\" class=\"w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600\" required />
         </div>
         <div>
-          <label for="modal-notes" class="block text-sm font-medium text-gray-400">Notes (optional)</label>
-          <input type="text" id="modal-notes" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" />
-        </div>
-      `, `<button type="submit" form="modal-form" class="bg-lime-400 text-gray-900 font-bold py-2 px-4 rounded-lg">Save</button>
-      <button type="button" class="bg-gray-700 text-gray-200 font-bold py-2 px-4 rounded-lg" onclick="hideModal()">Cancel</button>`);
+          <label for=\"modal-notes\" class=\"block text-sm font-medium text-gray-400\">Notes (optional)</label>
+          <input type=\"text\" id=\"modal-notes\" class=\"w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600\" />
+        </div>`, `<button type=\"submit\" form=\"modal-form\" class=\"bg-lime-400 text-gray-900 font-bold py-2 px-4 rounded-lg\">Save</button>
+      <button type=\"button\" class=\"bg-gray-700 text-gray-200 font-bold py-2 px-4 rounded-lg\" onclick=\"hideModal()\">Cancel</button>`);
 
       document.getElementById('modal-form').onsubmit = async (event) => {
         event.preventDefault();
@@ -516,15 +512,14 @@
     function addFoodItem() {
       showModal('Add Food Item', 'Enter food from your Food Library and quantity:', `
         <div>
-          <label for="modal-food-item" class="block text-sm font-medium text-gray-400">Food Name</label>
-          <input type="text" id="modal-food-item" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+          <label for=\"modal-food-item\" class=\"block text-sm font-medium text-gray-400\">Food Name</label>
+          <input type=\"text\" id=\"modal-food-item\" class=\"w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600\" required />
         </div>
         <div>
-          <label for="modal-quantity" class="block text-sm font-medium text-gray-400">Quantity</label>
-          <input type="number" step="0.1" id="modal-quantity" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
-        </div>
-      `, `<button type="submit" form="modal-form" class="bg-lime-400 text-gray-900 font-bold py-2 px-4 rounded-lg">Add</button>
-      <button type="button" class="bg-gray-700 text-gray-200 font-bold py-2 px-4 rounded-lg" onclick="hideModal()">Cancel</button>`);
+          <label for=\"modal-quantity\" class=\"block text-sm font-medium text-gray-400\">Quantity</label>
+          <input type=\"number\" step=\"0.1\" id=\"modal-quantity\" class=\"w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600\" required />
+        </div>`, `<button type=\"submit\" form=\"modal-form\" class=\"bg-lime-400 text-gray-900 font-bold py-2 px-4 rounded-lg\">Add</button>
+      <button type=\"button\" class=\"bg-gray-700 text-gray-200 font-bold py-2 px-4 rounded-lg\" onclick=\"hideModal()\">Cancel</button>`);
 
       document.getElementById('modal-form').onsubmit = async (event) => {
         event.preventDefault();
@@ -532,7 +527,7 @@
         const quantity = parseFloat(document.getElementById('modal-quantity').value);
         const food = (appData.foodLibrary || []).find(f => String(f['Food Item'] || '').toLowerCase() === String(foodItemName || '').toLowerCase());
         if (!food) {
-          showModal('Error', 'Food item not found in your Food Library. Please check spelling.', '', `<button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
+          showModal('Error', 'Food item not found in your Food Library. Please check spelling.', '', `<button class=\"bg-red-500 text-white font-bold py-2 px-4 rounded-lg\" onclick=\"hideModal()\">OK</button>`);
           return;
         }
 
