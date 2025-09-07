@@ -3,10 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>GRIT: TTTrack you</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>GRIT: Track you</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/dist/phosphor.js"></script>
@@ -19,7 +16,7 @@
     .chart-container { position: relative; width: 100%; height: 300px; }
   </style>
 </head>
-<body class="bg-gray-900 text-gray-200 font-sans p-4 flex flex-col min-h-screen">
+<body class="bg-gray-900 text-gray-200 font-sans p-4 flex flex-col min-h-screen pb-24">
   <!-- Brand Header -->
   <header class="text-center mb-6">
     <h1 class="text-3xl font-bold text-white mb-2 tracking-wide">GRIT</h1>
@@ -27,7 +24,7 @@
   </header>
 
   <!-- Main Content Area -->
-  <main id="app-content" class="flex-grow pb-20">
+  <main id="app-content" class="flex-grow">
     <!-- Loading Screen -->
     <div id="loading-screen" class="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center z-50 transition-opacity duration-500">
       <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-lime-400"></div>
@@ -159,20 +156,19 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Settings Section -->
     <div id="settings" class="tab-content p-2">
-        <h2 class="text-2xl font-bold mb-4 text-lime-400">Settings</h2>
-        <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
-            <h3 class="text-xl font-semibold text-gray-200 mb-4">My Goals</h3>
-            <form id="update-goals-form" class="space-y-4">
-                <div>
-                    <label for="setting-protein-goal" class="block text-sm font-medium text-gray-400">Daily Protein Goal (g)</label>
-                    <input type="number" id="setting-protein-goal" placeholder="e.g., 150" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600 focus:border-lime-400 focus:ring focus:ring-lime-400 focus:ring-opacity-50" required />
-                </div>
-                <button type="submit" class="w-full bg-lime-400 text-gray-900 font-bold py-2 rounded-lg transition hover:bg-lime-300">Save Goals</button>
-            </form>
-        </div>
+      <h2 class="text-2xl font-bold mb-4 text-lime-400">Settings</h2>
+      <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
+        <h3 class="text-xl font-semibold text-gray-200 mb-2">Your Goals</h3>
+        <form id="update-goals-form" class="space-y-4">
+          <div id="goals-list">
+             <p class="text-gray-400">Loading goals...</p>
+          </div>
+          <button type="submit" class="w-full bg-lime-400 text-gray-900 font-bold py-2 rounded-lg transition hover:bg-lime-300">Save Goals</button>
+        </form>
+      </div>
     </div>
   </main>
 
@@ -195,14 +191,15 @@
       <span class="text-xs mt-1">Progress</span>
     </a>
     <a href="#" id="nav-settings" class="nav-item flex flex-col items-center justify-center p-2 rounded-lg hover:text-lime-400">
-        <i class="ph-gear text-2xl"></i>
-        <span class="text-xs mt-1">Settings</span>
+      <i class="ph-gear text-2xl"></i>
+      <span class="text-xs mt-1">Settings</span>
     </a>
   </nav>
 
   <script>
     // ==================== CONFIG ====================
-    const appsScriptURL = 'https://script.google.com/macros/s/AKfycbydyk0XivKInvIAwCOJSVILP3juu93t8bqfFVZ9c1YUuGt4hh1x88ZSS17x-zu7-vY/exec';
+    // Paste your deployed Google Apps Script Web App /exec URL here:
+    const appsScriptURL = 'https://script.google.com/macros/s/AKfycbx4vqDUyefKyYz6ehD_akDUJNOtDd15vVknLId1gB67izA3n02n6vxbuBHKpXjKHPgI/exec';
 
     // ==================== STATE ====================
     let appData = {};
@@ -244,15 +241,16 @@
     function showLoading(show) {
       const el = document.getElementById('loading-screen');
       if (show) {
-        el.style.visibility = 'visible';
-        el.style.opacity = '1';
+          el.style.visibility = 'visible';
+          el.style.opacity = '1';
       } else {
-        el.style.opacity = '0';
-        setTimeout(() => { el.style.visibility = 'hidden'; }, 500); // Match transition duration
+          el.style.opacity = '0';
+          setTimeout(() => { el.style.visibility = 'hidden'; }, 500); // match transition duration
       }
     }
 
     // ==================== FETCH HELPERS ====================
+    // Form-encoded POST to avoid CORS preflight issues with some browsers
     async function postData(payload) {
       showLoading(true);
       try {
@@ -264,24 +262,26 @@
         const response = await fetch(appsScriptURL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body
+          body,
+          mode: 'cors' // Explicitly set mode
         });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        const text = await response.text();
+        let data;
+        try { 
+          data = JSON.parse(text); 
+        } catch (e) {
+          console.error("Non-JSON response from server:", text);
+          throw new Error('Non-JSON response from server. Check your Apps Script deployment and permissions.');
         }
 
-        const data = await response.json();
-        
-        if (!data.success) {
-          showModal('Error', `Error logging data: ${data.error}`, '', `<button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
+        if (data.success) {
+            showModal('Success', data.message || 'Operation successful!', '', `<button class="bg-lime-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
         } else {
-            // On successful post, show a confirmation and then refresh data
-            showModal('Success!', 'Your data has been saved successfully.', '', `<button class="bg-lime-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">Awesome!</button>`);
-            await fetchData(); // Refresh all app data
+            throw new Error(data.error || 'An unknown error occurred.');
         }
       } catch (error) {
-        showModal('Connection Error', `Could not log data. Error: ${error.message}`, '', `<button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
+        showModal('Connection Error', `Could not save data. Error: ${error.message}`, '', `<button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
         console.error('Error posting data:', error);
       } finally {
         showLoading(false);
@@ -293,24 +293,26 @@
       try {
         const url = `${appsScriptURL}?action=getDashboardData&cb=${Date.now()}`; // cache-bust
         console.log('Attempting to fetch data from URL:', url);
-        const response = await fetch(url);
+        const response = await fetch(url, { mode: 'cors' });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`Network response was not ok: ${response.statusText}`);
         }
 
-        const data = await response.json();
+        const text = await response.text();
+        let responseData;
+        try { responseData = JSON.parse(text); } catch { throw new Error('Non-JSON response (check deployment access/URL)'); }
 
-        if (data.success) {
-          appData = data.data; // The data is now nested in a 'data' property
+        if (responseData.success) {
+          appData = responseData.data; // The data is nested under a "data" property now
           console.log('Data fetched:', appData);
           renderApp();
         } else {
-          showModal('Error', `Error fetching data: ${data.error}`, '', `<button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
+          throw new Error(responseData.error || 'The script returned an error.');
         }
       } catch (error) {
         console.error('Fetch operation failed:', error);
-        showModal('Connection Error', `Could not connect to Google Apps Script. Please check the URL and ensure your script is deployed correctly with the latest code. Error: ${error.message}`, '', `<button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
+        showModal('Connection Error', `Could not connect to Google Apps Script. Please check the URL and deployment permissions. Error: ${error.message}`, '', `<button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
       } finally {
         showLoading(false);
       }
@@ -346,7 +348,7 @@
 
       const workoutPlanList = document.getElementById('daily-workout-plan');
       workoutPlanList.innerHTML = '';
-      if (workoutPlanToday) {
+      if (workoutPlanToday && Object.values(workoutPlanToday).some(v => v && v !== workoutPlanToday.Day)) {
         Object.keys(workoutPlanToday).forEach(key => {
           if (key !== 'Day' && workoutPlanToday[key]) {
             const p = document.createElement('p');
@@ -405,18 +407,13 @@
 
       const savedMealsList = document.getElementById('quick-add-meals');
       savedMealsList.innerHTML = '';
-      if(appData.savedMeals && appData.savedMeals.length > 0) {
-        appData.savedMeals.forEach(meal => {
-            const button = document.createElement('button');
-            button.className = 'bg-gray-700 text-gray-200 py-3 rounded-lg shadow-md hover:bg-gray-600 transition';
-            button.textContent = meal['Meal Name'];
-            button.onclick = () => logSavedMeal(meal);
-            savedMealsList.appendChild(button);
-        });
-      } else {
-        savedMealsList.innerHTML = '<p class="text-center text-gray-400 col-span-2">No saved meals found.</p>';
-      }
-
+      (appData.savedMeals || []).forEach(meal => {
+        const button = document.createElement('button');
+        button.className = 'bg-gray-700 text-gray-200 py-3 rounded-lg shadow-md hover:bg-gray-600 transition';
+        button.textContent = meal['Meal Name'];
+        button.onclick = () => logSavedMeal(meal);
+        savedMealsList.appendChild(button);
+      });
 
       const dietLogList = document.getElementById('diet-log-list');
       dietLogList.innerHTML = '';
@@ -451,8 +448,8 @@
           datasets: [{
             label: 'Weight (kg)',
             data: weights,
-            borderColor: 'rgb(163, 230, 53)',
-            backgroundColor: 'rgba(163, 230, 53, 0.2)',
+            borderColor: 'rgb(134, 239, 172)',
+            backgroundColor: 'rgba(134, 239, 172, 0.2)',
             tension: 0.1,
             fill: true,
           }],
@@ -470,9 +467,19 @@
     }
 
     function renderSettingsSection() {
-        const goals = (appData.goals || []).reduce((acc, g) => ({ ...acc, [g['Goal Name']]: g.Value }), {});
-        const proteinGoal = goals['Daily Protein Goal (g)'] || '';
-        document.getElementById('setting-protein-goal').value = proteinGoal;
+        const goalsList = document.getElementById('goals-list');
+        goalsList.innerHTML = '';
+        (appData.goals || []).forEach(goal => {
+            const goalName = goal['Goal Name'];
+            const goalValue = goal.Value;
+            const inputId = `goal-${goalName.replace(/\s+/g, '-')}`;
+            goalsList.innerHTML += `
+                <div>
+                  <label for="${inputId}" class="block text-sm font-medium text-gray-400">${goalName}</label>
+                  <input type="text" id="${inputId}" data-goal-name="${goalName}" value="${goalValue}" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" />
+                </div>
+            `;
+        });
     }
 
     // ==================== FEATURES ====================
@@ -482,13 +489,9 @@
         const exercise = workout.Exercise;
         const weight = parseFloat(workout['Weight (kg)']);
         const reps = parseInt(workout.Reps, 10);
-        if (!exercise) return;
-        if (prs[exercise]) {
-          if (weight > prs[exercise].Weight || (weight === prs[exercise].Weight && reps > prs[exercise].Reps)) {
-            prs[exercise] = { ...workout, Weight: weight, Reps: reps };
-          }
-        } else {
-          prs[exercise] = { ...workout, Weight: weight, Reps: reps };
+        if (!exercise || isNaN(weight) || isNaN(reps)) return;
+        if (!prs[exercise] || weight > prs[exercise]['Weight (kg)']) {
+            prs[exercise] = workout;
         }
       });
       return Object.values(prs).sort((a, b) => new Date(b.Date) - new Date(a.Date)).slice(0, 5);
@@ -520,39 +523,44 @@
 
       document.getElementById('modal-form').onsubmit = async (event) => {
         event.preventDefault();
-        hideModal(); // Hide modal immediately for better UX
-        const exercise = document.getElementById('modal-exercise').value;
-        const sets = document.getElementById('modal-sets').value;
-        const reps = document.getElementById('modal-reps').value;
-        const weight = document.getElementById('modal-weight').value;
-        const notes = document.getElementById('modal-notes').value;
-
-        const payload = { action: 'logWorkout', date: today, exercise, sets, reps, weight, notes };
+        const payload = {
+            action: 'logWorkout',
+            date: today,
+            exercise: document.getElementById('modal-exercise').value,
+            sets: document.getElementById('modal-sets').value,
+            reps: document.getElementById('modal-reps').value,
+            weight: document.getElementById('modal-weight').value,
+            notes: document.getElementById('modal-notes').value,
+        };
         await postData(payload);
+        hideModal();
+        fetchData();
       };
     }
 
     async function logSavedMeal(meal) {
-      hideModal();
-      showLoading(true);
+      showModal('Logging Meal', `Logging "${meal['Meal Name']}" to your diet log...`);
       const savedMealContents = JSON.parse(meal['Contents (JSON)'] || '[]');
       const foodLibrary = appData.foodLibrary || [];
       const mealsToLog = savedMealContents.map(savedFood => {
         const foodItem = foodLibrary.find(f => f['Food Item'] === savedFood['Food Item']);
         if (!foodItem) return null;
+        const quantity = savedFood.Quantity || 1;
         return {
           mealType: 'Saved Meal',
           foodItem: foodItem['Food Item'],
-          quantity: savedFood.Quantity,
-          protein: parseFloat(foodItem['Protein (g)']) * savedFood.Quantity,
-          carbs: parseFloat(foodItem['Carbs (g)']) * savedFood.Quantity,
-          fats: parseFloat(foodItem['Fats (g)']) * savedFood.Quantity,
-          calories: parseFloat(foodItem.Calories) * savedFood.Quantity,
+          quantity: quantity,
+          protein: (parseFloat(foodItem['Protein (g)']) || 0) * quantity,
+          carbs: (parseFloat(foodItem['Carbs (g)']) || 0) * quantity,
+          fats: (parseFloat(foodItem['Fats (g)']) || 0) * quantity,
+          calories: (parseFloat(foodItem.Calories) || 0) * quantity,
         };
       }).filter(Boolean);
 
       const payload = { action: 'logDiet', date: today, meals: mealsToLog };
       await postData(payload);
+      hideModal();
+      fetchData();
     }
 
     function addFoodItem() {
@@ -566,64 +574,64 @@
         </div>
         <div>
           <label for="modal-quantity" class="block text-sm font-medium text-gray-400">Quantity</label>
-          <input type="number" step="0.1" id="modal-quantity" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+          <input type="number" step="0.1" value="1" id="modal-quantity" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
         </div>`, `<button type="submit" form="modal-form" class="bg-lime-400 text-gray-900 font-bold py-2 px-4 rounded-lg">Add</button>
       <button type="button" class="bg-gray-700 text-gray-200 font-bold py-2 px-4 rounded-lg" onclick="hideModal()">Cancel</button>`);
 
       document.getElementById('modal-form').onsubmit = async (event) => {
         event.preventDefault();
-        
         const foodItemName = document.getElementById('modal-food-item').value;
         const quantity = parseFloat(document.getElementById('modal-quantity').value);
         const food = (appData.foodLibrary || []).find(f => String(f['Food Item'] || '').toLowerCase() === String(foodItemName || '').toLowerCase());
-        
         if (!food) {
           showModal('Error', 'Food item not found in your Food Library. Please check spelling.', '', `<button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
           return;
         }
 
-        hideModal(); // Hide modal immediately
-        
         const mealToLog = [{
           mealType: 'Manual',
           foodItem: food['Food Item'],
           quantity,
-          protein: parseFloat(food['Protein (g)']) * quantity,
-          carbs: parseFloat(food['Carbs (g)']) * quantity,
-          fats: parseFloat(food['Fats (g)']) * quantity,
-          calories: parseFloat(food.Calories) * quantity,
+          protein: (parseFloat(food['Protein (g)']) || 0) * quantity,
+          carbs: (parseFloat(food['Carbs (g)']) || 0) * quantity,
+          fats: (parseFloat(food['Fats (g)']) || 0) * quantity,
+          calories: (parseFloat(food.Calories) || 0) * quantity,
         }];
 
         const payload = { action: 'logDiet', date: today, meals: mealToLog };
         await postData(payload);
+        hideModal();
+        fetchData();
       };
     }
 
     async function logProgress(event) {
       event.preventDefault();
       const form = event.target;
-      const weight = form['progress-weight'].value;
-      const date = form['progress-date'].value;
-      const photo = form['progress-photo'].value || '';
-
-      const payload = { action: 'logProgress', date, weight: parseFloat(weight), chest: '', waist: '', hips: '', photo, notes: '' };
+      const payload = { 
+        action: 'logProgress', 
+        date: form['progress-date'].value,
+        weight: parseFloat(form['progress-weight'].value), 
+        photo: form['progress-photo'].value || '', 
+        // Sending empty strings for unused fields
+        chest: '', waist: '', hips: '', notes: ''
+      };
       await postData(payload);
       form.reset();
-      form['progress-date'].value = today; // Reset date to today
+      form['progress-date'].value = today;
+      fetchData();
     }
-
+    
     async function updateGoals(event) {
         event.preventDefault();
-        const form = event.target;
-        const newProteinGoal = form['setting-protein-goal'].value;
-        
-        const payload = {
-            action: 'updateGoals',
-            goals: {
-                'Daily Protein Goal (g)': parseFloat(newProteinGoal)
-            }
-        };
+        const inputs = document.getElementById('goals-list').querySelectorAll('input');
+        const goalsToUpdate = {};
+        inputs.forEach(input => {
+            goalsToUpdate[input.dataset.goalName] = input.value;
+        });
+        const payload = { action: 'updateGoals', goals: goalsToUpdate };
         await postData(payload);
+        fetchData();
     }
 
     // ==================== NAV ====================
@@ -635,18 +643,17 @@
     }
 
     // ==================== EVENTS ====================
-    document.getElementById('start-workout-btn').addEventListener('click', () => switchTab('workout'));
     document.getElementById('log-workout-btn').addEventListener('click', logWorkout);
+    document.getElementById('start-workout-btn').addEventListener('click', () => switchTab('workout'));
     document.getElementById('log-meal-btn').addEventListener('click', addFoodItem);
     document.getElementById('log-progress-form').addEventListener('submit', logProgress);
     document.getElementById('update-goals-form').addEventListener('submit', updateGoals);
-    
-    Object.keys(navItems).forEach(key => {
-        navItems[key].addEventListener('click', (e) => {
-            e.preventDefault();
-            switchTab(key)
-        });
-    });
+
+    navItems.dashboard.addEventListener('click', () => switchTab('dashboard'));
+    navItems.workout.addEventListener('click', () => switchTab('workout'));
+    navItems.diet.addEventListener('click', () => switchTab('diet'));
+    navItems.progress.addEventListener('click', () => switchTab('progress'));
+    navItems.settings.addEventListener('click', () => switchTab('settings'));
 
     // ==================== INIT ====================
     document.addEventListener('DOMContentLoaded', () => {
