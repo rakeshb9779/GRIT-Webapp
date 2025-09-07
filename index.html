@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>GRIT:T Track you</title>
+  <title>GRIT: Track you</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/dist/phosphor.js"></script>
@@ -29,6 +32,14 @@
     }
     .delete-workout-btn:hover {
         background-color: rgba(239, 68, 68, 0.1);
+    }
+    /* Style for completed diet items */
+    .meal-completed {
+        opacity: 0.5;
+        text-decoration: line-through;
+    }
+    .meal-completed input[type="checkbox"] {
+        accent-color: #4ade80; /* green-400 */
     }
   </style>
 </head>
@@ -60,15 +71,40 @@
     <!-- Dashboard Section -->
     <div id="dashboard" class="tab-content active p-2">
       <div class="grid grid-cols-1 gap-4">
-        <!-- Protein Progress Card -->
+        <!-- Macros Progress Card -->
         <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
-          <h2 class="text-xl font-semibold text-lime-400 mb-2">Today's Progress</h2>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-lg">Protein Goal</span>
-            <span id="protein-progress-text" class="text-lg font-bold">0g / 0g</span>
-          </div>
-          <div class="w-full bg-gray-700 rounded-full h-2.5">
-            <div id="protein-progress-bar" class="bg-lime-400 h-2.5 rounded-full" style="width: 0%;"></div>
+          <h2 class="text-xl font-semibold text-lime-400 mb-2">Today's Macros</h2>
+          <div class="space-y-3">
+             <!-- Protein -->
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-base">Protein</span>
+                <span id="protein-progress-text" class="text-base font-bold">0g / 0g</span>
+              </div>
+              <div class="w-full bg-gray-700 rounded-full h-2.5">
+                <div id="protein-progress-bar" class="bg-lime-400 h-2.5 rounded-full" style="width: 0%;"></div>
+              </div>
+            </div>
+             <!-- Carbs -->
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-base">Carbs</span>
+                <span id="carbs-progress-text" class="text-base font-bold">0g / 0g</span>
+              </div>
+              <div class="w-full bg-gray-700 rounded-full h-2.5">
+                <div id="carbs-progress-bar" class="bg-sky-400 h-2.5 rounded-full" style="width: 0%;"></div>
+              </div>
+            </div>
+             <!-- Fats -->
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-base">Fats</span>
+                <span id="fats-progress-text" class="text-base font-bold">0g / 0g</span>
+              </div>
+              <div class="w-full bg-gray-700 rounded-full h-2.5">
+                <div id="fats-progress-bar" class="bg-amber-400 h-2.5 rounded-full" style="width: 0%;"></div>
+              </div>
+            </div>
           </div>
         </div>
         <!-- Daily Workout Plan Card -->
@@ -99,8 +135,8 @@
         <div id="active-workout-exercises" class="space-y-4">
           <!-- Exercise cards will be injected here by JS -->
         </div>
-        <button id="finish-workout-btn" class="mt-6 w-full bg-gray-600 text-gray-200 font-bold py-3 rounded-lg transition hover:bg-gray-500">
-          Finish Workout
+        <button id="finish-workout-btn" class="mt-6 w-full bg-red-600 text-gray-200 font-bold py-3 rounded-lg transition hover:bg-red-500">
+          Finish & Save Workout
         </button>
       </div>
 
@@ -119,32 +155,9 @@
     <!-- Diet Section -->
     <div id="diet" class="tab-content p-2">
       <h2 class="text-2xl font-bold mb-4 text-lime-400">Diet Tracker</h2>
-      <div id="diet-progress-dashboard" class="bg-gray-800 rounded-xl p-4 shadow-lg mb-4">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-lg font-semibold">Today's Macros</span>
-          <span id="diet-totals-text" class="text-sm text-gray-400">P: 0g | C: 0g | F: 0g</span>
-        </div>
-        <div class="flex flex-col gap-2">
-          <div class="flex justify-between items-center">
-            <span class="text-gray-300">Protein</span>
-            <span id="protein-today" class="font-bold">0g / 0g</span>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-300">Carbs</span>
-            <span id="carbs-today" class="font-bold">0g</span>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-300">Fats</span>
-            <span id="fats-today" class="font-bold">0g</span>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-300">Calories</span>
-            <span id="calories-today" class="font-bold">0 kcal</span>
-          </div>
-        </div>
-      </div>
-      <h3 class="text-xl font-semibold text-lime-400 mb-2">Quick-Add Meals</h3>
-      <div id="quick-add-meals" class="grid grid-cols-2 gap-3 mb-6">
+      <!-- Diet Dashboard moved to Home tab -->
+      <h3 class="text-xl font-semibold text-lime-400 mb-2">Today's Planned Meals</h3>
+      <div id="daily-diet-plan" class="space-y-2 mb-6">
         <p class="text-center text-gray-400 col-span-2">Loading saved meals...</p>
       </div>
       <h3 class="text-xl font-semibold text-lime-400 mb-2">Today's Log</h3>
@@ -152,7 +165,7 @@
         <p class="text-center text-gray-400">Log a meal to see it here.</p>
       </div>
       <button id="log-meal-btn" class="mt-6 w-full bg-lime-400 text-gray-900 font-bold py-3 rounded-lg transition hover:bg-lime-300 shadow-xl">
-        Add Food
+        Add Food Item
       </button>
     </div>
 
@@ -246,11 +259,24 @@
 
   <script>
     // ==================== CONFIG ====================
+    const SPREADSHEET_ID = '2PACX-1vQiJvI_6Sskh-ei7zjY-8lFbUoFY-2n--zZQAgvnucn3WlJlrr5MFB93j5x9WKZY2pOW3UEjvB8sfY_';
+    const sheets = {
+        workouts: `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?gid=0&single=true&output=csv`,
+        workoutPlan: `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?gid=1675295238&single=true&output=csv`,
+        dietLog: `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?gid=1625601626&single=true&output=csv`,
+        foodLibrary: `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?gid=1110434829&single=true&output=csv`,
+        savedMeals: `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?gid=1017602197&single=true&output=csv`,
+        goals: `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?gid=2043123073&single=true&output=csv`,
+        progress: `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?gid=2043123073&single=true&output=csv` // Assuming progress is in the goals sheet
+    };
+    // This URL is a placeholder. You need to deploy your own Apps Script and paste the URL here.
     const appsScriptURL = 'https://script.google.com/macros/s/AKfycbx4vqDUyefKyYz6ehD_akDUJNOtDd15vVknLId1gB67izA3n02n6vxbuBHKpXjKHPgI/exec';
+
 
     // ==================== STATE ====================
     let appData = {};
     let chartInstance;
+    let currentWorkoutSession = []; // NEW: To store sets before finishing workout
     const today = new Date().toISOString().slice(0, 10);
 
     // Nav refs
@@ -380,12 +406,25 @@
     function renderDashboard() {
       const goals = (appData.goals || []).reduce((acc, g) => ({ ...acc, [g['Goal Name']]: g.Value }), {});
       const dietLog = (appData.dietLog || []).filter(log => log.Date === today);
-      const todayProtein = dietLog.reduce((sum, log) => sum + (parseFloat(log['Logged Protein (g)']) || 0), 0);
-      const totalProteinGoal = parseFloat(goals['Daily Protein Goal (g)']) || 0;
-      const proteinProgressPercent = totalProteinGoal > 0 ? (todayProtein / totalProteinGoal) * 100 : 0;
 
-      document.getElementById('protein-progress-text').textContent = `${Math.round(todayProtein)}g / ${totalProteinGoal}g`;
-      document.getElementById('protein-progress-bar').style.width = `${Math.min(proteinProgressPercent, 100)}%`;
+      const todayProtein = dietLog.reduce((sum, log) => sum + (parseFloat(log['Logged Protein (g)']) || 0), 0);
+      const todayCarbs = dietLog.reduce((sum, log) => sum + (parseFloat(log['Logged Carbs (g)']) || 0), 0);
+      const todayFats = dietLog.reduce((sum, log) => sum + (parseFloat(log['Logged Fats (g)']) || 0), 0);
+
+      const goalProtein = parseFloat(goals['Daily Protein Goal (g)']) || 0;
+      const goalCarbs = parseFloat(goals['Daily Carbs Goal (g)']) || 0;
+      const goalFats = parseFloat(goals['Daily Fats Goal (g)']) || 0;
+      
+      const proteinPercent = goalProtein > 0 ? (todayProtein / goalProtein) * 100 : 0;
+      const carbsPercent = goalCarbs > 0 ? (todayCarbs / goalCarbs) * 100 : 0;
+      const fatsPercent = goalFats > 0 ? (todayFats / goalFats) * 100 : 0;
+
+      document.getElementById('protein-progress-text').textContent = `${Math.round(todayProtein)}g / ${goalProtein}g`;
+      document.getElementById('protein-progress-bar').style.width = `${Math.min(proteinPercent, 100)}%`;
+      document.getElementById('carbs-progress-text').textContent = `${Math.round(todayCarbs)}g / ${goalCarbs}g`;
+      document.getElementById('carbs-progress-bar').style.width = `${Math.min(carbsPercent, 100)}%`;
+      document.getElementById('fats-progress-text').textContent = `${Math.round(todayFats)}g / ${goalFats}g`;
+      document.getElementById('fats-progress-bar').style.width = `${Math.min(fatsPercent, 100)}%`;
 
       const todayIndex = new Date().getDay();
       const planArr = appData.workoutPlan || [];
@@ -403,7 +442,7 @@
         });
         document.getElementById('start-workout-btn').disabled = false;
       } else {
-        workoutPlanList.innerHTML = '<p>No workout planned for today.</p>';
+        workoutPlanList.innerHTML = '<p>Rest day! No workout planned.</p>';
         document.getElementById('start-workout-btn').disabled = true;
       }
 
@@ -412,7 +451,7 @@
       prsDiv.innerHTML = '';
       if (recentPRs.length > 0) {
         recentPRs.forEach(pr => {
-          prsDiv.innerHTML += `<p>${pr.Exercise} PR: ${pr['Weight (kg)']}kg x ${pr.Reps} reps</p>`;
+          prsDiv.innerHTML += `<p><strong>${pr.Exercise}:</strong> ${pr['Weight (kg)']}kg x ${pr.Reps} reps</p>`;
         });
       } else {
         prsDiv.innerHTML = '<p>Log some workouts to see your personal bests here!</p>';
@@ -432,7 +471,7 @@
                         <i class="ph-trash text-xl"></i>
                     </button>
                     <h4 class="font-bold text-lime-400">${log.Date} - ${log.Exercise}</h4>
-                    <p>Sets: ${log.Sets}, Reps: ${log.Reps}, Weight: ${log['Weight (kg)']}kg</p>
+                    <p>Set: ${log.Sets}, Reps: ${log.Reps}, Weight: ${log['Weight (kg)']}kg</p>
                     <p class="text-sm text-gray-400">Notes: ${log.Notes || ''}</p>`;
                 workoutLogList.appendChild(workoutCard);
             });
@@ -443,44 +482,57 @@
 
 
     function renderDietSection() {
-      const goals = (appData.goals || []).reduce((acc, g) => ({ ...acc, [g['Goal Name']]: g.Value }), {});
-      const dietLog = (appData.dietLog || []).filter(log => log.Date === today);
-      const todayProtein = dietLog.reduce((sum, log) => sum + (parseFloat(log['Logged Protein (g)']) || 0), 0);
-      const todayCarbs = dietLog.reduce((sum, log) => sum + (parseFloat(log['Logged Carbs (g)']) || 0), 0);
-      const todayFats = dietLog.reduce((sum, log) => sum + (parseFloat(log['Logged Fats (g)']) || 0), 0);
-      const todayCalories = dietLog.reduce((sum, log) => sum + (parseFloat(log['Logged Calories']) || 0), 0);
+        const dietLog = (appData.dietLog || []).filter(log => log.Date === today);
+        const loggedFoodItems = dietLog.map(log => log['Food Item']);
 
-      document.getElementById('protein-today').textContent = `${Math.round(todayProtein)}g / ${goals['Daily Protein Goal (g)'] || 0}g`;
-      document.getElementById('carbs-today').textContent = `${Math.round(todayCarbs)}g`;
-      document.getElementById('fats-today').textContent = `${Math.round(todayFats)}g`;
-      document.getElementById('calories-today').textContent = `${Math.round(todayCalories)} kcal`;
-      document.getElementById('diet-totals-text').textContent = `P: ${Math.round(todayProtein)}g | C: ${Math.round(todayCarbs)}g | F: ${Math.round(todayFats)}g`;
+        const dailyPlanContainer = document.getElementById('daily-diet-plan');
+        dailyPlanContainer.innerHTML = '';
+        
+        (appData.savedMeals || []).forEach(meal => {
+            // A simple check to see if any food from this meal has been logged today.
+            // This is an approximation. A more robust system would log the "Meal Name".
+            const isCompleted = false; // For now, we don't know if the *meal* is complete, just individual foods.
 
-      const savedMealsList = document.getElementById('quick-add-meals');
-      savedMealsList.innerHTML = '';
-      (appData.savedMeals || []).forEach(meal => {
-        const button = document.createElement('button');
-        button.className = 'bg-gray-700 text-gray-200 py-3 rounded-lg shadow-md hover:bg-gray-600 transition';
-        button.textContent = meal['Meal Name'];
-        button.onclick = () => logSavedMeal(meal);
-        savedMealsList.appendChild(button);
-      });
+            const mealId = `meal-${meal['Meal Name'].replace(/\s+/g, '-')}`;
+            const mealContainer = document.createElement('div');
+            mealContainer.className = `bg-gray-800 rounded-lg p-3 flex items-center justify-between shadow-md transition ${isCompleted ? 'meal-completed' : ''}`;
+            
+            mealContainer.innerHTML = `
+                <div>
+                    <label for="${mealId}" class="font-bold text-gray-200 cursor-pointer">${meal['Meal Name']}</label>
+                    <p class="text-sm text-gray-400">P:${meal['Total Protein (g)']}g, C:${meal['Total Carbs (g)']}g, F:${meal['Total Fats (g)']}g</p>
+                </div>
+                <input type="checkbox" id="${mealId}" class="h-6 w-6 rounded border-gray-600 bg-gray-700 text-lime-500 focus:ring-lime-500" ${isCompleted ? 'checked disabled' : ''}>
+            `;
 
-      const dietLogList = document.getElementById('diet-log-list');
-      dietLogList.innerHTML = '';
-      if (dietLog.length > 0) {
-        dietLog.forEach(log => {
-          const logItem = document.createElement('div');
-          logItem.className = 'bg-gray-800 rounded-lg p-3 shadow-md';
-          logItem.innerHTML = `
-            <p class="font-bold text-gray-200">${log['Food Item']} (${log.Quantity})</p>
-            <p class="text-sm text-gray-400">P: ${log['Logged Protein (g)']}g, C: ${log['Logged Carbs (g)']}g, F: ${log['Logged Fats (g)']}g</p>`;
-          dietLogList.appendChild(logItem);
+            dailyPlanContainer.appendChild(mealContainer);
+
+            // Add event listener to the checkbox
+            mealContainer.querySelector(`#${mealId}`).addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    e.target.disabled = true;
+                    mealContainer.classList.add('meal-completed');
+                    logSavedMeal(meal);
+                }
+            });
         });
-      } else {
-        dietLogList.innerHTML = '<p class="text-center text-gray-400">No meals logged today.</p>';
-      }
+        
+        const dietLogList = document.getElementById('diet-log-list');
+        dietLogList.innerHTML = '';
+        if (dietLog.length > 0) {
+            dietLog.slice().reverse().forEach(log => {
+                const logItem = document.createElement('div');
+                logItem.className = 'bg-gray-700 rounded-lg p-3 shadow-md';
+                logItem.innerHTML = `
+                    <p class="font-bold text-gray-200">${log['Food Item']} (${log.Quantity})</p>
+                    <p class="text-sm text-gray-400">P: ${log['Logged Protein (g)']}g, C: ${log['Logged Carbs (g)']}g, F: ${log['Logged Fats (g)']}g</p>`;
+                dietLogList.appendChild(logItem);
+            });
+        } else {
+            dietLogList.innerHTML = '<p class="text-center text-gray-400">No meals logged today.</p>';
+        }
     }
+
 
     function renderProgressSection() {
       const progressData = (appData.progress || [])
@@ -543,6 +595,8 @@
         if (!exercise || isNaN(weight) || isNaN(reps)) return;
         if (!prs[exercise] || weight > prs[exercise]['Weight (kg)']) {
             prs[exercise] = workout;
+        } else if (weight === prs[exercise]['Weight (kg)'] && reps > prs[exercise].Reps) {
+            prs[exercise] = workout;
         }
       });
       return Object.values(prs).sort((a, b) => new Date(b.Date) - new Date(a.Date)).slice(0, 5);
@@ -555,8 +609,8 @@
           <input type="text" id="modal-exercise" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
         </div>
         <div>
-          <label for="modal-sets" class="block text-sm font-medium text-gray-400">Sets</label>
-          <input type="number" id="modal-sets" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+          <label for="modal-sets" class="block text-sm font-medium text-gray-400">Set Number</label>
+          <input type="number" id="modal-sets" value="1" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
         </div>
         <div>
           <label for="modal-reps" class="block text-sm font-medium text-gray-400">Reps</label>
@@ -591,7 +645,6 @@
       };
     }
     
-    // --- NEW --- Function to confirm and handle workout deletion
     function confirmDeleteWorkout(rowIndex) {
         const workoutToDelete = appData.workouts.find(w => w.rowIndex == rowIndex);
         if (!workoutToDelete) return;
@@ -612,8 +665,7 @@
         const success = await postData(payload, false); // Don't show generic success modal
 
         if (success) {
-            // --- OPTIMIZATION ---
-            // Update local state and re-render instantly instead of full fetchData()
+            // Optimistic UI update
             const indexToRemove = appData.workouts.findIndex(w => w.rowIndex == rowIndex);
             if (indexToRemove > -1) {
                 appData.workouts.splice(indexToRemove, 1);
@@ -622,14 +674,34 @@
             renderDashboard(); // Re-render dashboard to update PRs
             showModal('Deleted', 'The workout entry has been removed.', '', `<button class="bg-lime-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
         } else {
-            // Error modal is already shown by postData()
             hideModal(); // Hide the confirmation modal if delete fails
         }
     }
 
 
     async function logSavedMeal(meal) {
-      showModal('Logging Meal', `Logging "${meal['Meal Name']}" to your diet log...`);
+      // Optimistic UI update for dashboard
+      const goals = (appData.goals || []).reduce((acc, g) => ({ ...acc, [g['Goal Name']]: g.Value }), {});
+      const proteinToAdd = parseFloat(meal['Total Protein (g)']) || 0;
+      const carbsToAdd = parseFloat(meal['Total Carbs (g)']) || 0;
+      const fatsToAdd = parseFloat(meal['Total Fats (g)']) || 0;
+      
+      // Add to existing diet log for immediate render
+      const newLogEntry = {
+          'Food Item': meal['Meal Name'],
+          'Quantity': 1,
+          'Logged Protein (g)': proteinToAdd,
+          'Logged Carbs (g)': carbsToAdd,
+          'Logged Fats (g)': fatsToAdd,
+          'Date': today
+      };
+      if (!appData.dietLog) appData.dietLog = [];
+      appData.dietLog.push(newLogEntry);
+      
+      renderDashboard(); // Re-render dashboard with new values
+      renderDietSection(); // Re-render diet list
+
+      // Now send data to the backend
       const savedMealContents = JSON.parse(meal['Contents (JSON)'] || '[]');
       const foodLibrary = appData.foodLibrary || [];
       const mealsToLog = savedMealContents.map(savedFood => {
@@ -648,9 +720,14 @@
       }).filter(Boolean);
 
       const payload = { action: 'logDiet', date: today, meals: mealsToLog };
-      await postData(payload);
-      hideModal();
-      fetchData();
+      const success = await postData(payload, false); // Post without success modal
+      if (!success) {
+          // If it fails, revert the optimistic update
+          appData.dietLog.pop(); // remove the item we added
+          renderDashboard();
+          renderDietSection();
+      }
+      // No need to fetchData() on success, as UI is already updated
     }
 
     function addFoodItem() {
@@ -689,9 +766,11 @@
         }];
 
         const payload = { action: 'logDiet', date: today, meals: mealToLog };
-        await postData(payload);
-        hideModal();
-        fetchData();
+        const success = await postData(payload);
+        if(success) {
+            hideModal();
+            fetchData();
+        }
       };
     }
 
@@ -728,7 +807,7 @@
         if (success) fetchData();
     }
 
-    // ==================== ACTIVE WORKOUT ====================
+    // ==================== ACTIVE WORKOUT (NEW & UPDATED) ====================
     function startWorkoutSession() {
         const todayIndex = new Date().getDay();
         const workoutPlanToday = (appData.workoutPlan || []).find(p => dayNameToIndex(p.Day) === todayIndex);
@@ -747,30 +826,45 @@
 
         const sessionContainer = document.getElementById('active-workout-exercises');
         sessionContainer.innerHTML = ''; // Clear previous session
+        currentWorkoutSession = []; // Clear previous logs
 
         exercises.forEach(exerciseName => {
-            const exerciseId = exerciseName.replace(/\s+/g, '-');
+            const lastWorkout = (appData.workouts || [])
+                .filter(w => w.Exercise === exerciseName)
+                .sort((a, b) => new Date(b.Date) - new Date(a.Date))[0];
+            
+            const lastWeight = lastWorkout ? lastWorkout['Weight (kg)'] : '';
+
             const card = document.createElement('div');
             card.className = 'bg-gray-800 rounded-lg p-4 shadow-md';
-            card.innerHTML = `
-                <form class="exercise-form space-y-3" data-exercise="${exerciseName}">
-                    <h4 class="font-bold text-xl text-white">${exerciseName}</h4>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div>
-                            <label for="sets-${exerciseId}" class="block text-sm font-medium text-gray-400">Sets</label>
-                            <input type="number" id="sets-${exerciseId}" class="sets-input w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+            card.dataset.exercise = exerciseName;
+            
+            let setsHtml = '';
+            // Let's default to 3 sets if not specified
+            for (let i = 1; i <= 3; i++) {
+                setsHtml += `
+                    <div class="set-row grid grid-cols-12 gap-2 items-center" data-set-number="${i}">
+                        <span class="col-span-1 text-center font-bold text-lime-400">${i}</span>
+                        <div class="col-span-5">
+                            <label class="hidden">Reps</label>
+                            <input type="number" placeholder="Reps" class="reps-input w-full bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600">
                         </div>
-                        <div>
-                            <label for="reps-${exerciseId}" class="block text-sm font-medium text-gray-400">Reps</label>
-                            <input type="number" id="reps-${exerciseId}" class="reps-input w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+                        <div class="col-span-5">
+                            <label class="hidden">Weight (kg)</label>
+                            <input type="number" step="0.5" placeholder="kg" value="${lastWeight}" class="weight-input w-full bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600">
                         </div>
-                        <div>
-                            <label for="weight-${exerciseId}" class="block text-sm font-medium text-gray-400">Weight (kg)</label>
-                            <input type="number" step="0.1" id="weight-${exerciseId}" class="weight-input w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+                        <div class="col-span-1 flex justify-center">
+                            <input type="checkbox" class="set-checkbox h-6 w-6 rounded border-gray-600 bg-gray-700 text-lime-500 focus:ring-lime-500">
                         </div>
                     </div>
-                    <button type="submit" class="w-full bg-lime-400 text-gray-900 font-bold py-2 rounded-lg transition hover:bg-lime-300">Log Exercise</button>
-                </form>
+                `;
+            }
+
+            card.innerHTML = `
+                <h4 class="font-bold text-xl text-white mb-3">${exerciseName}</h4>
+                <div class="space-y-2">
+                    ${setsHtml}
+                </div>
             `;
             sessionContainer.appendChild(card);
         });
@@ -780,11 +874,45 @@
         switchTab('workout');
     }
 
-    function finishWorkoutSession() {
-        document.getElementById('active-workout-session').classList.add('hidden');
-        document.getElementById('default-workout-view').classList.remove('hidden');
-        fetchData(); // Refresh the workout log
+    async function finishWorkoutSession() {
+        // Collect all checked sets
+        document.querySelectorAll('#active-workout-exercises .set-row').forEach(row => {
+            const checkbox = row.querySelector('.set-checkbox');
+            if (checkbox.checked) {
+                const reps = row.querySelector('.reps-input').value;
+                const weight = row.querySelector('.weight-input').value;
+                if (reps && weight) { // Only log if both reps and weight are filled
+                    currentWorkoutSession.push({
+                        exercise: row.closest('[data-exercise]').dataset.exercise,
+                        setNumber: row.dataset.setNumber,
+                        reps: reps,
+                        weight: weight,
+                        notes: ''
+                    });
+                }
+            }
+        });
+
+        if (currentWorkoutSession.length === 0) {
+            showModal('Empty Workout', 'No sets were logged. Nothing to save.', '', `<button class="bg-gray-700 font-bold py-2 px-4 rounded-lg" onclick="hideModal()">Cancel</button>`);
+            return;
+        }
+
+        const payload = {
+            action: 'logWorkoutSession',
+            date: today,
+            sets: currentWorkoutSession
+        };
+
+        const success = await postData(payload);
+
+        if (success) {
+            document.getElementById('active-workout-session').classList.add('hidden');
+            document.getElementById('default-workout-view').classList.remove('hidden');
+            fetchData(); // Refresh the workout log
+        }
     }
+
 
     function dayOfWeek(dayIndex) {
         return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][dayIndex];
@@ -802,41 +930,8 @@
     document.getElementById('log-workout-btn').addEventListener('click', logWorkout);
     document.getElementById('start-workout-btn').addEventListener('click', startWorkoutSession);
     document.getElementById('finish-workout-btn').addEventListener('click', finishWorkoutSession);
-    document.getElementById('active-workout-exercises').addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const form = event.target.closest('.exercise-form');
-        if (!form) return;
-
-        const exerciseName = form.dataset.exercise;
-        const button = form.querySelector('button[type="submit"]');
-
-        const payload = {
-            action: 'logWorkout',
-            date: today,
-            exercise: exerciseName,
-            sets: form.querySelector('.sets-input').value,
-            reps: form.querySelector('.reps-input').value,
-            weight: form.querySelector('.weight-input').value,
-            notes: ''
-        };
-        
-        button.disabled = true;
-        button.textContent = 'Logging...';
-
-        const success = await postData(payload, false); // Post data without showing success modal
-
-        if(success) {
-            button.textContent = 'Logged ✔';
-            button.classList.remove('bg-lime-400', 'hover:bg-lime-300');
-            button.classList.add('bg-green-600', 'cursor-not-allowed');
-        } else {
-            button.disabled = false;
-            button.textContent = 'Log Exercise';
-            // Optionally show an error message specific to this exercise
-        }
-    });
     
-    // --- NEW --- Event delegation for delete buttons
+    // Event delegation for delete buttons
     document.getElementById('workout-log-list').addEventListener('click', (event) => {
         const deleteBtn = event.target.closest('.delete-workout-btn');
         if (deleteBtn) {
