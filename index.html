@@ -1,960 +1,512 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>GRIT: Track you</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/dist/phosphor.js"></script>
-  <style>
-    body { touch-action: pan-y; -webkit-tap-highlight-color: transparent; font-family: 'Inter', sans-serif; }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    .chart-container { position: relative; width: 100%; height: 300px; }
-    .workout-card-container { position: relative; }
-    .delete-workout-btn {
-        position: absolute;
-        top: 0.75rem;
-        right: 0.75rem;
-        background: transparent;
-        border: none;
-        color: #ef4444; /* red-500 */
-        cursor: pointer;
-        padding: 0.25rem;
-        border-radius: 9999px;
-        transition: background-color 0.2s;
-    }
-    .delete-workout-btn:hover {
-        background-color: rgba(239, 68, 68, 0.1);
-    }
-    /* Style for completed diet items */
-    .meal-completed {
-        opacity: 0.5;
-        text-decoration: line-through;
-    }
-    .meal-completed input[type="checkbox"] {
-        accent-color: #4ade80; /* green-400 */
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grit | Track you.</title>
+    <!-- Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .bg-grit-dark {
+            background-color: #1a202c; /* A dark color for the header */
+        }
+        .text-grit-accent {
+            color: #d8b4fe; /* A purple accent color */
+        }
+        .progress-bar-protein {
+            height: 10px;
+            border-radius: 9999px;
+            transition: width 0.5s ease-in-out;
+        }
+        .card {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+    </style>
 </head>
-<body class="bg-gray-900 text-gray-200 font-sans p-4 flex flex-col min-h-screen pb-24">
-  <!-- Brand Header -->
-  <header class="text-center mb-6">
-    <h1 class="text-3xl font-bold text-white mb-2 tracking-wide">GRIT</h1>
-    <p class="text-gray-400 text-lg">Track you</p>
-  </header>
+<body class="bg-gray-100 text-gray-800">
 
-  <!-- Main Content Area -->
-  <main id="app-content" class="flex-grow">
-    <!-- Loading Screen -->
-    <div id="loading-screen" class="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center z-50 transition-opacity duration-500">
-      <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-lime-400"></div>
-      <p class="mt-4 text-lime-400 text-lg">Loading data...</p>
+    <div id="loading" class="fixed inset-0 bg-gray-100 flex items-center justify-center z-50">
+        <div class="flex flex-col items-center">
+            <svg class="animate-spin h-10 w-10 text-grit-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="mt-4 text-gray-600">Loading your data...</p>
+        </div>
     </div>
 
-    <!-- Modals -->
-    <div id="modal-container" class="fixed inset-0 bg-gray-950 bg-opacity-80 z-[100] hidden items-center justify-center p-4">
-      <div id="modal-content" class="bg-gray-800 p-6 rounded-xl shadow-2xl max-w-sm w-full">
-        <h3 id="modal-title" class="text-xl font-bold text-white mb-4"></h3>
-        <p id="modal-message" class="text-gray-300 mb-4"></p>
-        <form id="modal-form" class="space-y-4 hidden"></form>
-        <div id="modal-buttons" class="flex justify-end gap-2"></div>
-      </div>
-    </div>
+    <div class="min-h-screen max-w-lg mx-auto p-4 flex flex-col">
 
-    <!-- Dashboard Section -->
-    <div id="dashboard" class="tab-content active p-2">
-      <div class="grid grid-cols-1 gap-4">
-        <!-- Macros Progress Card -->
-        <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
-          <h2 class="text-xl font-semibold text-lime-400 mb-2">Today's Macros</h2>
-          <div class="space-y-3">
-             <!-- Protein -->
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-base">Protein</span>
-                <span id="protein-progress-text" class="text-base font-bold">0g / 0g</span>
-              </div>
-              <div class="w-full bg-gray-700 rounded-full h-2.5">
-                <div id="protein-progress-bar" class="bg-lime-400 h-2.5 rounded-full" style="width: 0%;"></div>
-              </div>
-            </div>
-             <!-- Carbs -->
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-base">Carbs</span>
-                <span id="carbs-progress-text" class="text-base font-bold">0g / 0g</span>
-              </div>
-              <div class="w-full bg-gray-700 rounded-full h-2.5">
-                <div id="carbs-progress-bar" class="bg-sky-400 h-2.5 rounded-full" style="width: 0%;"></div>
-              </div>
-            </div>
-             <!-- Fats -->
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-base">Fats</span>
-                <span id="fats-progress-text" class="text-base font-bold">0g / 0g</span>
-              </div>
-              <div class="w-full bg-gray-700 rounded-full h-2.5">
-                <div id="fats-progress-bar" class="bg-amber-400 h-2.5 rounded-full" style="width: 0%;"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Daily Workout Plan Card -->
-        <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
-          <h2 class="text-xl font-semibold text-lime-400 mb-2">Today's Workout</h2>
-          <div id="daily-workout-plan" class="text-gray-300">
-            <p>Loading workout plan...</p>
-          </div>
-          <button id="start-workout-btn" class="mt-4 w-full bg-lime-400 text-gray-900 font-bold py-2 rounded-lg transition hover:bg-lime-300 shadow-xl">
-            Start Workout
-          </button>
-        </div>
-        <!-- Recent Personal Bests Card -->
-        <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
-          <h2 class="text-xl font-semibold text-lime-400 mb-2">Recent Personal Bests</h2>
-          <div id="recent-prs" class="text-gray-300">
-            <p>No recent PRs logged.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Workout Section -->
-    <div id="workout" class="tab-content p-2">
-      <!-- This view is for the active, guided workout -->
-      <div id="active-workout-session" class="hidden">
-        <h2 class="text-2xl font-bold mb-4 text-lime-400">Today's Session</h2>
-        <div id="active-workout-exercises" class="space-y-4">
-          <!-- Exercise cards will be injected here by JS -->
-        </div>
-        <button id="finish-workout-btn" class="mt-6 w-full bg-red-600 text-gray-200 font-bold py-3 rounded-lg transition hover:bg-red-500">
-          Finish & Save Workout
-        </button>
-      </div>
-
-      <!-- This is the default view showing the log history -->
-      <div id="default-workout-view">
-        <h2 class="text-2xl font-bold mb-4 text-lime-400">Workout Log</h2>
-        <div id="workout-log-list" class="space-y-4">
-          <p class="text-center text-gray-400">Start a workout from the Home tab or log a single exercise below.</p>
-        </div>
-        <button id="log-workout-btn" class="mt-6 w-full bg-lime-400 text-gray-900 font-bold py-3 rounded-lg transition hover:bg-lime-300 shadow-xl">
-          Log Single Exercise
-        </button>
-      </div>
-    </div>
-
-    <!-- Diet Section -->
-    <div id="diet" class="tab-content p-2">
-      <h2 class="text-2xl font-bold mb-4 text-lime-400">Diet Tracker</h2>
-      <!-- Diet Dashboard moved to Home tab -->
-      <h3 class="text-xl font-semibold text-lime-400 mb-2">Today's Planned Meals</h3>
-      <div id="daily-diet-plan" class="space-y-2 mb-6">
-        <p class="text-center text-gray-400 col-span-2">Loading saved meals...</p>
-      </div>
-      <h3 class="text-xl font-semibold text-lime-400 mb-2">Today's Log</h3>
-      <div id="diet-log-list" class="space-y-2">
-        <p class="text-center text-gray-400">Log a meal to see it here.</p>
-      </div>
-      <button id="log-meal-btn" class="mt-6 w-full bg-lime-400 text-gray-900 font-bold py-3 rounded-lg transition hover:bg-lime-300 shadow-xl">
-        Add Food Item
-      </button>
-    </div>
-
-    <!-- Progress Section -->
-    <div id="progress" class="tab-content p-2">
-      <h2 class="text-2xl font-bold mb-4 text-lime-400">Progress Dashboard</h2>
-      <div class="grid grid-cols-1 gap-4">
-        <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
-          <h3 class="text-xl font-semibold text-gray-200 mb-2">Weight Over Time</h3>
-          <div class="chart-container">
-            <canvas id="weight-chart"></canvas>
-          </div>
-        </div>
-        <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
-          <h3 class="text-xl font-semibold text-gray-200 mb-2">Log Progress</h3>
-          <form id="log-progress-form" class="space-y-4">
-            <div>
-              <label for="progress-date" class="block text-sm font-medium text-gray-400">Date</label>
-              <input type="date" id="progress-date" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600 focus:border-lime-400 focus:ring focus:ring-lime-400 focus:ring-opacity-50" required />
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label for="progress-weight" class="block text-sm font-medium text-gray-400">Weight (kg)</label>
-                <input type="number" step="0.1" id="progress-weight" placeholder="e.g., 75.5" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
-              </div>
-              <div>
-                <label for="progress-waist" class="block text-sm font-medium text-gray-400">Waist (in)</label>
-                <input type="number" step="0.1" id="progress-waist" placeholder="e.g., 32" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" />
-              </div>
-              <div>
-                <label for="progress-chest" class="block text-sm font-medium text-gray-400">Chest (in)</label>
-                <input type="number" step="0.1" id="progress-chest" placeholder="e.g., 40" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" />
-              </div>
-              <div>
-                <label for="progress-arms" class="block text-sm font-medium text-gray-400">Arms (in)</label>
-                <input type="number" step="0.1" id="progress-arms" placeholder="e.g., 14" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" />
-              </div>
-               <div>
-                <label for="progress-thighs" class="block text-sm font-medium text-gray-400">Thighs (in)</label>
-                <input type="number" step="0.1" id="progress-thighs" placeholder="e.g., 23" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" />
-              </div>
-            </div>
-            <div>
-              <label for="progress-photo" class="block text-sm font-medium text-gray-400">Photo Link</label>
-              <input type="text" id="progress-photo" placeholder="Optional URL" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" />
-            </div>
-            <button type="submit" class="w-full bg-lime-400 text-gray-900 font-bold py-2 rounded-lg transition hover:bg-lime-300">Save Progress</button>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- Settings Section -->
-    <div id="settings" class="tab-content p-2">
-      <h2 class="text-2xl font-bold mb-4 text-lime-400">Settings</h2>
-      <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
-        <h3 class="text-xl font-semibold text-gray-200 mb-2">Your Goals</h3>
-        <form id="update-goals-form" class="space-y-4">
-          <div id="goals-list">
-             <p class="text-gray-400">Loading goals...</p>
-          </div>
-          <button type="submit" class="w-full bg-lime-400 text-gray-900 font-bold py-2 rounded-lg transition hover:bg-lime-300">Save Goals</button>
-        </form>
-      </div>
-    </div>
-  </main>
-
-  <!-- Bottom Navigation Bar -->
-  <nav class="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 flex justify-around items-center p-3 text-gray-400 z-40">
-    <a href="#" id="nav-dashboard" class="nav-item flex flex-col items-center justify-center p-2 rounded-lg text-lime-400">
-      <i class="ph-house-fill text-2xl"></i>
-      <span class="text-xs mt-1">Home</span>
-    </a>
-    <a href="#" id="nav-workout" class="nav-item flex flex-col items-center justify-center p-2 rounded-lg hover:text-lime-400">
-      <i class="ph-barbell text-2xl"></i>
-      <span class="text-xs mt-1">Workout</span>
-    </a>
-    <a href="#" id="nav-diet" class="nav-item flex flex-col items-center justify-center p-2 rounded-lg hover:text-lime-400">
-      <i class="ph-fork-knife text-2xl"></i>
-      <span class="text-xs mt-1">Diet</span>
-    </a>
-    <a href="#" id="nav-progress" class="nav-item flex flex-col items-center justify-center p-2 rounded-lg hover:text-lime-400">
-      <i class="ph-chart-line text-2xl"></i>
-      <span class="text-xs mt-1">Progress</span>
-    </a>
-    <a href="#" id="nav-settings" class="nav-item flex flex-col items-center justify-center p-2 rounded-lg hover:text-lime-400">
-      <i class="ph-gear text-2xl"></i>
-      <span class="text-xs mt-1">Settings</span>
-    </a>
-  </nav>
-
-  <script>
-    // ==================== CONFIG ====================
-    const SPREADSHEET_ID = '2PACX-1vQiJvI_6Sskh-ei7zjY-8lFbUoFY-2n--zZQAgvnucn3WlJlrr5MFB93j5x9WKZY2pOW3UEjvB8sfY_';
-    const sheets = {
-        workouts: `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?gid=0&single=true&output=csv`,
-        workoutPlan: `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?gid=1675295238&single=true&output=csv`,
-        dietLog: `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?gid=1625601626&single=true&output=csv`,
-        foodLibrary: `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?gid=1110434829&single=true&output=csv`,
-        savedMeals: `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?gid=1017602197&single=true&output=csv`,
-        goals: `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?gid=2043123073&single=true&output=csv`,
-        progress: `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?gid=2043123073&single=true&output=csv` // Assuming progress is in the goals sheet
-    };
-    // This URL is a placeholder. You need to deploy your own Apps Script and paste the URL here.
-    const appsScriptURL = 'https://script.google.com/macros/s/AKfycbx4vqDUyefKyYz6ehD_akDUJNOtDd15vVknLId1gB67izA3n02n6vxbuBHKpXjKHPgI/exec';
-
-
-    // ==================== STATE ====================
-    let appData = {};
-    let chartInstance;
-    let currentWorkoutSession = []; // NEW: To store sets before finishing workout
-    const today = new Date().toISOString().slice(0, 10);
-
-    // Nav refs
-    const navItems = {
-      dashboard: document.getElementById('nav-dashboard'),
-      workout: document.getElementById('nav-workout'),
-      diet: document.getElementById('nav-diet'),
-      progress: document.getElementById('nav-progress'),
-      settings: document.getElementById('nav-settings'),
-    };
-
-    // Modal elements
-    const modalContainer = document.getElementById('modal-container');
-    const modalTitle = document.getElementById('modal-title');
-    const modalMessage = document.getElementById('modal-message');
-    const modalForm = document.getElementById('modal-form');
-    const modalButtons = document.getElementById('modal-buttons');
-
-    // ==================== UTIL: MODAL ====================
-    function showModal(title, message, formHtml = '', buttonsHtml = '') {
-      modalTitle.textContent = title;
-      modalMessage.textContent = message;
-      modalForm.innerHTML = formHtml;
-      modalButtons.innerHTML = buttonsHtml;
-      modalForm.classList.toggle('hidden', formHtml === '');
-      modalContainer.classList.remove('hidden');
-      modalContainer.classList.add('flex');
-    }
-    function hideModal() {
-      modalContainer.classList.remove('flex');
-      modalContainer.classList.add('hidden');
-    }
-
-    // ==================== UTIL: LOADING ====================
-    function showLoading(show) {
-      const el = document.getElementById('loading-screen');
-      if (show) {
-          el.style.visibility = 'visible';
-          el.style.opacity = '1';
-      } else {
-          el.style.opacity = '0';
-          setTimeout(() => { el.style.visibility = 'hidden'; }, 500); // match transition duration
-      }
-    }
-
-    // ==================== FETCH HELPERS ====================
-    async function postData(payload, showSuccessModal = true) {
-      showLoading(true);
-      try {
-        const body = new URLSearchParams();
-        body.set('action', payload.action);
-        body.set('data', JSON.stringify(payload));
-        
-        const response = await fetch(appsScriptURL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body,
-          mode: 'cors'
-        });
-
-        const text = await response.text();
-        let data;
-        try { 
-          data = JSON.parse(text); 
-        } catch (e) {
-          console.error("Non-JSON response from server:", text);
-          throw new Error('Non-JSON response from server. Check deployment.');
-        }
-
-        if (data.success) {
-            if (showSuccessModal) {
-              showModal('Success', data.message || 'Operation successful!', '', `<button class="bg-lime-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
-            }
-        } else {
-            throw new Error(data.error || 'An unknown error occurred.');
-        }
-        return data.success; // Return success status
-      } catch (error) {
-        showModal('Connection Error', `Could not save data. Error: ${error.message}`, '', `<button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
-        console.error('Error posting data:', error);
-        return false; // Return failure status
-      } finally {
-        showLoading(false);
-      }
-    }
-
-    async function fetchData() {
-      showLoading(true);
-      try {
-        const url = `${appsScriptURL}?action=getDashboardData&cb=${Date.now()}`;
-        const response = await fetch(url, { mode: 'cors' });
-        
-        if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
-
-        const text = await response.text();
-        let responseData;
-        try { responseData = JSON.parse(text); } catch { throw new Error('Non-JSON response (check deployment access/URL)'); }
-
-        if (responseData.success) {
-          appData = responseData.data;
-          renderApp();
-        } else {
-          throw new Error(responseData.error || 'The script returned an error.');
-        }
-      } catch (error) {
-        console.error('Fetch operation failed:', error);
-        showModal('Connection Error', `Could not connect to Google Apps Script. Error: ${error.message}`, '', `<button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
-      } finally {
-        showLoading(false);
-      }
-    }
-
-    // ==================== RENDERERS ====================
-    function renderApp() {
-      renderDashboard();
-      renderWorkoutSection();
-      renderDietSection();
-      renderProgressSection();
-      renderSettingsSection();
-    }
-
-    function dayNameToIndex(name) {
-      const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
-      return map[String(name || '').toLowerCase()] ?? -1;
-    }
-
-    function renderDashboard() {
-      const goals = (appData.goals || []).reduce((acc, g) => ({ ...acc, [g['Goal Name']]: g.Value }), {});
-      const dietLog = (appData.dietLog || []).filter(log => log.Date === today);
-
-      const todayProtein = dietLog.reduce((sum, log) => sum + (parseFloat(log['Logged Protein (g)']) || 0), 0);
-      const todayCarbs = dietLog.reduce((sum, log) => sum + (parseFloat(log['Logged Carbs (g)']) || 0), 0);
-      const todayFats = dietLog.reduce((sum, log) => sum + (parseFloat(log['Logged Fats (g)']) || 0), 0);
-
-      const goalProtein = parseFloat(goals['Daily Protein Goal (g)']) || 0;
-      const goalCarbs = parseFloat(goals['Daily Carbs Goal (g)']) || 0;
-      const goalFats = parseFloat(goals['Daily Fats Goal (g)']) || 0;
-      
-      const proteinPercent = goalProtein > 0 ? (todayProtein / goalProtein) * 100 : 0;
-      const carbsPercent = goalCarbs > 0 ? (todayCarbs / goalCarbs) * 100 : 0;
-      const fatsPercent = goalFats > 0 ? (todayFats / goalFats) * 100 : 0;
-
-      document.getElementById('protein-progress-text').textContent = `${Math.round(todayProtein)}g / ${goalProtein}g`;
-      document.getElementById('protein-progress-bar').style.width = `${Math.min(proteinPercent, 100)}%`;
-      document.getElementById('carbs-progress-text').textContent = `${Math.round(todayCarbs)}g / ${goalCarbs}g`;
-      document.getElementById('carbs-progress-bar').style.width = `${Math.min(carbsPercent, 100)}%`;
-      document.getElementById('fats-progress-text').textContent = `${Math.round(todayFats)}g / ${goalFats}g`;
-      document.getElementById('fats-progress-bar').style.width = `${Math.min(fatsPercent, 100)}%`;
-
-      const todayIndex = new Date().getDay();
-      const planArr = appData.workoutPlan || [];
-      const workoutPlanToday = planArr.find(p => dayNameToIndex(p.Day) === todayIndex);
-
-      const workoutPlanList = document.getElementById('daily-workout-plan');
-      workoutPlanList.innerHTML = '';
-      if (workoutPlanToday && Object.values(workoutPlanToday).some(v => v && v !== workoutPlanToday.Day)) {
-        Object.keys(workoutPlanToday).forEach(key => {
-          if (key !== 'Day' && workoutPlanToday[key]) {
-            const p = document.createElement('p');
-            p.textContent = `• ${workoutPlanToday[key]}`;
-            workoutPlanList.appendChild(p);
-          }
-        });
-        document.getElementById('start-workout-btn').disabled = false;
-      } else {
-        workoutPlanList.innerHTML = '<p>Rest day! No workout planned.</p>';
-        document.getElementById('start-workout-btn').disabled = true;
-      }
-
-      const recentPRs = findRecentPRs();
-      const prsDiv = document.getElementById('recent-prs');
-      prsDiv.innerHTML = '';
-      if (recentPRs.length > 0) {
-        recentPRs.forEach(pr => {
-          prsDiv.innerHTML += `<p><strong>${pr.Exercise}:</strong> ${pr['Weight (kg)']}kg x ${pr.Reps} reps</p>`;
-        });
-      } else {
-        prsDiv.innerHTML = '<p>Log some workouts to see your personal bests here!</p>';
-      }
-    }
-
-    function renderWorkoutSection() {
-        const workoutLogList = document.getElementById('workout-log-list');
-        workoutLogList.innerHTML = '';
-        const workouts = (appData.workouts || []).slice().sort((a, b) => new Date(b.Date) - new Date(a.Date));
-        if (workouts.length > 0) {
-            workouts.forEach(log => {
-                const workoutCard = document.createElement('div');
-                workoutCard.className = 'workout-card-container bg-gray-800 rounded-lg p-4 shadow-md';
-                workoutCard.innerHTML = `
-                    <button class="delete-workout-btn" data-row-index="${log.rowIndex}" aria-label="Delete workout">
-                        <i class="ph-trash text-xl"></i>
-                    </button>
-                    <h4 class="font-bold text-lime-400">${log.Date} - ${log.Exercise}</h4>
-                    <p>Set: ${log.Sets}, Reps: ${log.Reps}, Weight: ${log['Weight (kg)']}kg</p>
-                    <p class="text-sm text-gray-400">Notes: ${log.Notes || ''}</p>`;
-                workoutLogList.appendChild(workoutCard);
-            });
-        } else {
-            workoutLogList.innerHTML = '<p class="text-center text-gray-400">No workouts logged yet.</p>';
-        }
-    }
-
-
-    function renderDietSection() {
-        const dietLog = (appData.dietLog || []).filter(log => log.Date === today);
-        const loggedFoodItems = dietLog.map(log => log['Food Item']);
-
-        const dailyPlanContainer = document.getElementById('daily-diet-plan');
-        dailyPlanContainer.innerHTML = '';
-        
-        (appData.savedMeals || []).forEach(meal => {
-            // A simple check to see if any food from this meal has been logged today.
-            // This is an approximation. A more robust system would log the "Meal Name".
-            const isCompleted = false; // For now, we don't know if the *meal* is complete, just individual foods.
-
-            const mealId = `meal-${meal['Meal Name'].replace(/\s+/g, '-')}`;
-            const mealContainer = document.createElement('div');
-            mealContainer.className = `bg-gray-800 rounded-lg p-3 flex items-center justify-between shadow-md transition ${isCompleted ? 'meal-completed' : ''}`;
-            
-            mealContainer.innerHTML = `
-                <div>
-                    <label for="${mealId}" class="font-bold text-gray-200 cursor-pointer">${meal['Meal Name']}</label>
-                    <p class="text-sm text-gray-400">P:${meal['Total Protein (g)']}g, C:${meal['Total Carbs (g)']}g, F:${meal['Total Fats (g)']}g</p>
+        <!-- Header -->
+        <header class="bg-white rounded-xl shadow-md p-4 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <!-- SVG Logo with a bicep icon and heart rate line -->
+                    <svg class="h-10 w-10 mr-2 text-grit-accent" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12.24 16.24c-1.42.0-2.58-1.16-2.58-2.58 0-1.42 1.16-2.58 2.58-2.58s2.58 1.16 2.58 2.58c0 1.42-1.16 2.58-2.58 2.58z" />
+                        <path d="M16 11c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1zm5-2h-3v-2c0-.55-.45-1-1-1h-2c-.55 0-1 .45-1 1v2h-3v-2c0-.55-.45-1-1-1h-2c-.55 0-1 .45-1 1v2h-3v-2c0-.55-.45-1-1-1h-2c-.55 0-1 .45-1 1v3.5c0 .76-.41 1.44-1.07 1.81-.66.37-1.43.34-2.07-.09-.64-.43-1.04-1.1-1.04-1.84v-2c0-.55-.45-1-1-1s-1 .45-1 1v2c0 2.21 1.79 4 4 4h1.5c.83 0 1.5.67 1.5 1.5v.5c0 .55-.45 1-1 1s-1-.45-1-1v-.5c0-.28-.22-.5-.5-.5h-2c-1.1 0-2 .9-2 2v1c0 .55.45 1 1 1s1-.45 1-1v-1c0-.28.22-.5.5-.5h2c1.1 0 2-.9 2-2v-.5c0-.55.45-1 1-1s1 .45 1 1v.5c0 .28-.22.5-.5.5h-1c-.28 0-.5.22-.5.5v1c0 .55.45 1 1 1s1-.45 1-1v-1c0-.28.22-.5.5-.5h2c1.1 0 2-.9 2-2v-.5c0-.55.45-1 1-1s1 .45 1 1v.5c0 .28-.22.5-.5.5h-1c-.28 0-.5.22-.5.5v1c0 .55.45 1 1 1s1-.45 1-1v-1c0-.28.22-.5.5-.5h2c1.1 0 2-.9 2-2v-.5c0-.55.45-1 1-1s1 .45 1 1v.5c0 .28-.22.5-.5.5h-1c-.28 0-.5.22-.5.5v1c0 .55.45 1 1 1s1-.45 1-1v-1c0-.28.22-.5.5-.5h2c.55 0 1-.45 1-1v-2c0-.55-.45-1-1-1z" />
+                    </svg>
+                    <div class="flex flex-col">
+                        <h1 class="text-3xl font-bold">Grit</h1>
+                        <p class="text-sm font-light text-gray-500">Track you.</p>
+                    </div>
                 </div>
-                <input type="checkbox" id="${mealId}" class="h-6 w-6 rounded border-gray-600 bg-gray-700 text-lime-500 focus:ring-lime-500" ${isCompleted ? 'checked disabled' : ''}>
-            `;
+            </div>
+        </header>
 
-            dailyPlanContainer.appendChild(mealContainer);
+        <!-- Navigation -->
+        <nav class="flex justify-between items-center bg-white rounded-xl shadow-md p-2 mb-6">
+            <button id="nav-dashboard" class="flex-1 p-3 text-center font-semibold rounded-lg text-grit-accent border-b-2 border-grit-accent transition-all">Dashboard</button>
+            <button id="nav-workouts" class="flex-1 p-3 text-center font-semibold rounded-lg text-gray-500 hover:text-grit-accent transition-all">Workouts</button>
+            <button id="nav-diet" class="flex-1 p-3 text-center font-semibold rounded-lg text-gray-500 hover:text-grit-accent transition-all">Diet</button>
+        </nav>
 
-            // Add event listener to the checkbox
-            mealContainer.querySelector(`#${mealId}`).addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    e.target.disabled = true;
-                    mealContainer.classList.add('meal-completed');
-                    logSavedMeal(meal);
-                }
-            });
-        });
-        
-        const dietLogList = document.getElementById('diet-log-list');
-        dietLogList.innerHTML = '';
-        if (dietLog.length > 0) {
-            dietLog.slice().reverse().forEach(log => {
-                const logItem = document.createElement('div');
-                logItem.className = 'bg-gray-700 rounded-lg p-3 shadow-md';
-                logItem.innerHTML = `
-                    <p class="font-bold text-gray-200">${log['Food Item']} (${log.Quantity})</p>
-                    <p class="text-sm text-gray-400">P: ${log['Logged Protein (g)']}g, C: ${log['Logged Carbs (g)']}g, F: ${log['Logged Fats (g)']}g</p>`;
-                dietLogList.appendChild(logItem);
-            });
-        } else {
-            dietLogList.innerHTML = '<p class="text-center text-gray-400">No meals logged today.</p>';
-        }
-    }
-
-
-    function renderProgressSection() {
-      const progressData = (appData.progress || [])
-        .filter(d => d['Weight (kg)'])
-        .sort((a, b) => new Date(a.Date) - new Date(b.Date));
-      const labels = progressData.map(d => d.Date);
-      const weights = progressData.map(d => parseFloat(d['Weight (kg)']));
-
-      if (chartInstance) chartInstance.destroy();
-
-      const ctx = document.getElementById('weight-chart').getContext('2d');
-      chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Weight (kg)',
-            data: weights,
-            borderColor: 'rgb(134, 239, 172)',
-            backgroundColor: 'rgba(134, 239, 172, 0.2)',
-            tension: 0.1,
-            fill: true,
-          }],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } },
-            y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } },
-          },
-          plugins: { legend: { labels: { color: 'white' } } },
-        },
-      });
-    }
-
-    function renderSettingsSection() {
-        const goalsList = document.getElementById('goals-list');
-        goalsList.innerHTML = '';
-        (appData.goals || []).forEach(goal => {
-            const goalName = goal['Goal Name'];
-            const goalValue = goal.Value;
-            const inputId = `goal-${goalName.replace(/\s+/g, '-')}`;
-            goalsList.innerHTML += `
-                <div>
-                  <label for="${inputId}" class="block text-sm font-medium text-gray-400">${goalName}</label>
-                  <input type="text" id="${inputId}" data-goal-name="${goalName}" value="${goalValue}" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" />
+        <!-- Main Content Views -->
+        <main class="flex-grow">
+            <!-- Dashboard View -->
+            <section id="view-dashboard" class="space-y-6">
+                <div class="card p-6">
+                    <h2 class="text-xl font-bold mb-4">Today's Progress</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-semibold">Protein</span>
+                            <span id="protein-progress-text" class="text-sm font-medium text-gray-500">0g / 0g</span>
+                        </div>
+                        <div class="bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                            <div id="protein-progress-bar" class="bg-grit-accent h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
                 </div>
-            `;
-        });
-    }
 
-    // ==================== FEATURES ====================
-    function findRecentPRs() {
-      const prs = {};
-      (appData.workouts || []).forEach(workout => {
-        const exercise = workout.Exercise;
-        const weight = parseFloat(workout['Weight (kg)']);
-        const reps = parseInt(workout.Reps, 10);
-        if (!exercise || isNaN(weight) || isNaN(reps)) return;
-        if (!prs[exercise] || weight > prs[exercise]['Weight (kg)']) {
-            prs[exercise] = workout;
-        } else if (weight === prs[exercise]['Weight (kg)'] && reps > prs[exercise].Reps) {
-            prs[exercise] = workout;
-        }
-      });
-      return Object.values(prs).sort((a, b) => new Date(b.Date) - new Date(a.Date)).slice(0, 5);
-    }
+                <div class="card p-6">
+                    <h2 class="text-xl font-bold mb-4">Daily Totals</h2>
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div class="bg-gray-100 rounded-lg p-4">
+                            <p id="total-calories" class="text-2xl font-bold">0</p>
+                            <span class="text-sm text-gray-500">Calories</span>
+                        </div>
+                        <div class="bg-gray-100 rounded-lg p-4">
+                            <p id="total-carbs" class="text-2xl font-bold">0g</p>
+                            <span class="text-sm text-gray-500">Carbs</span>
+                        </div>
+                        <div class="bg-gray-100 rounded-lg p-4">
+                            <p id="total-fats" class="text-2xl font-bold">0g</p>
+                            <span class="text-sm text-gray-500">Fats</span>
+                        </div>
+                        <div class="bg-gray-100 rounded-lg p-4">
+                            <p id="total-protein" class="text-2xl font-bold">0g</p>
+                            <span class="text-sm text-gray-500">Protein</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-    function logWorkout() {
-      showModal('Log Single Exercise', 'Enter your workout details:', `
-        <div>
-          <label for="modal-exercise" class="block text-sm font-medium text-gray-400">Exercise</label>
-          <input type="text" id="modal-exercise" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
-        </div>
-        <div>
-          <label for="modal-sets" class="block text-sm font-medium text-gray-400">Set Number</label>
-          <input type="number" id="modal-sets" value="1" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
-        </div>
-        <div>
-          <label for="modal-reps" class="block text-sm font-medium text-gray-400">Reps</label>
-          <input type="number" id="modal-reps" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
-        </div>
-        <div>
-          <label for="modal-weight" class="block text-sm font-medium text-gray-400">Weight (kg)</label>
-          <input type="number" step="0.1" id="modal-weight" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
-        </div>
-        <div>
-          <label for="modal-notes" class="block text-sm font-medium text-gray-400">Notes (optional)</label>
-          <input type="text" id="modal-notes" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" />
-        </div>`, `<button type="submit" form="modal-form" class="bg-lime-400 text-gray-900 font-bold py-2 px-4 rounded-lg">Save</button>
-      <button type="button" class="bg-gray-700 text-gray-200 font-bold py-2 px-4 rounded-lg" onclick="hideModal()">Cancel</button>`);
+            <!-- Workouts View -->
+            <section id="view-workouts" class="space-y-6 hidden">
+                <div class="card p-6">
+                    <h2 class="text-xl font-bold mb-4">Today's Workout</h2>
+                    <div id="workout-list" class="space-y-4">
+                        <!-- Workout plan will be dynamically inserted here -->
+                    </div>
+                </div>
+            </section>
 
-      document.getElementById('modal-form').onsubmit = async (event) => {
-        event.preventDefault();
-        const payload = {
-            action: 'logWorkout',
-            date: today,
-            exercise: document.getElementById('modal-exercise').value,
-            sets: document.getElementById('modal-sets').value,
-            reps: document.getElementById('modal-reps').value,
-            weight: document.getElementById('modal-weight').value,
-            notes: document.getElementById('modal-notes').value,
+            <!-- Diet View -->
+            <section id="view-diet" class="space-y-6 hidden">
+                <div class="card p-6">
+                    <h2 class="text-xl font-bold mb-4">Saved Meals</h2>
+                    <div id="meal-list" class="space-y-4">
+                        <!-- Saved meals will be dynamically inserted here -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Google Sheets URLs
+        const GOOGLE_APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4vqDUyefKyYz6ehD_akDUJNOtDd15vVknLId1gB67izA3n02n6vxbuBHKpXjKHPgI/exec';
+        const CSV_URLS = {
+            workouts: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQiJvI_6Sskh-ei7zjY-8lFbUoFY-2n--zZQAgvnucn3WlJlrr5MFB93j5x9WKZY2pOW3UEjvB8sfY_/pub?gid=0&single=true&output=csv',
+            workoutPlan: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQiJvI_6Sskh-ei7zjY-8lFbUoFY-2n--zZQAgvnucn3WlJlrr5MFB93j5x9WKZY2pOW3UEjvB8sfY_/pub?gid=1675295238&single=true&output=csv',
+            foodLibrary: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQiJvI_6Sskh-ei7zjY-8lFbUoFY-2n--zZQAgvnucn3WlJlrr5MFB93j5x9WKZY2pOW3UEjvB8sfY_/pub?gid=1110434829&single=true&output=csv',
+            savedMeals: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQiJvI_6Sskh-ei7zjY-8lFbUoFY-2n--zZQAgvnucn3WlJlrr5MFB93j5x9WKZY2pOW3UEjvB8sfY_/pub?gid=1017602197&single=true&output=csv',
+            goals: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQiJvI_6Sskh-ei7zjY-8sI_6Sskh-ei7zjY-8lFbUoFY-2n--zZQAgvnucn3WlJlrr5MFB93j5x9WKZY2pOW3UEjvB8sfY_/pub?gid=2043123073&single=true&output=csv',
+            dietLog: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQiJvI_6Sskh-ei7zjY-8lFbUoFY-2n--zZQAgvnucn3WlJlrr5MFB93j5x9WKZY2pOW3UEjvB8sfY_/pub?gid=1625601626&single=true&output=csv'
         };
-        const success = await postData(payload);
-        if (success) {
-            hideModal();
-            fetchData();
-        }
-      };
-    }
-    
-    function confirmDeleteWorkout(rowIndex) {
-        const workoutToDelete = appData.workouts.find(w => w.rowIndex == rowIndex);
-        if (!workoutToDelete) return;
 
-        showModal(
-            'Confirm Deletion', 
-            `Are you sure you want to delete the workout: ${workoutToDelete.Exercise} on ${workoutToDelete.Date}?`, 
-            '', 
-            `<button id="confirm-delete-btn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg">Delete</button>
-             <button type="button" class="bg-gray-700 text-gray-200 font-bold py-2 px-4 rounded-lg" onclick="hideModal()">Cancel</button>`
-        );
+        // UI Elements
+        const loadingScreen = document.getElementById('loading');
+        const views = {
+            dashboard: document.getElementById('view-dashboard'),
+            workouts: document.getElementById('view-workouts'),
+            diet: document.getElementById('view-diet')
+        };
+        const navButtons = {
+            dashboard: document.getElementById('nav-dashboard'),
+            workouts: document.getElementById('nav-workouts'),
+            diet: document.getElementById('nav-diet')
+        };
+        const workoutList = document.getElementById('workout-list');
+        const mealList = document.getElementById('meal-list');
+        const proteinProgressBar = document.getElementById('protein-progress-bar');
+        const proteinProgressText = document.getElementById('protein-progress-text');
+        const totalCalories = document.getElementById('total-calories');
+        const totalCarbs = document.getElementById('total-carbs');
+        const totalFats = document.getElementById('total-fats');
+        const totalProtein = document.getElementById('total-protein');
 
-        document.getElementById('confirm-delete-btn').onclick = () => handleDeleteWorkout(rowIndex);
-    }
+        // App State
+        let data = {};
+        let dailyTotals = {
+            calories: 0,
+            protein: 0,
+            carbs: 0,
+            fats: 0
+        };
 
-    async function handleDeleteWorkout(rowIndex) {
-        const payload = { action: 'deleteWorkout', rowIndex: Number(rowIndex) };
-        const success = await postData(payload, false); // Don't show generic success modal
+        // --- Core Functions ---
 
-        if (success) {
-            // Optimistic UI update
-            const indexToRemove = appData.workouts.findIndex(w => w.rowIndex == rowIndex);
-            if (indexToRemove > -1) {
-                appData.workouts.splice(indexToRemove, 1);
+        /**
+         * Fetches and parses CSV data from a given URL.
+         * @param {string} url The URL of the Google Sheet CSV export.
+         * @returns {Promise<Object[]>} An array of objects, where each object is a row.
+         */
+        async function fetchData(url) {
+            try {
+                const response = await fetch(url);
+                const csvText = await response.text();
+                return parseCsv(csvText);
+            } catch (error) {
+                console.error('Error fetching data from ' + url, error);
+                return [];
             }
-            renderWorkoutSection(); // Re-render only the workout list
-            renderDashboard(); // Re-render dashboard to update PRs
-            showModal('Deleted', 'The workout entry has been removed.', '', `<button class="bg-lime-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
-        } else {
-            hideModal(); // Hide the confirmation modal if delete fails
-        }
-    }
-
-
-    async function logSavedMeal(meal) {
-      // Optimistic UI update for dashboard
-      const goals = (appData.goals || []).reduce((acc, g) => ({ ...acc, [g['Goal Name']]: g.Value }), {});
-      const proteinToAdd = parseFloat(meal['Total Protein (g)']) || 0;
-      const carbsToAdd = parseFloat(meal['Total Carbs (g)']) || 0;
-      const fatsToAdd = parseFloat(meal['Total Fats (g)']) || 0;
-      
-      // Add to existing diet log for immediate render
-      const newLogEntry = {
-          'Food Item': meal['Meal Name'],
-          'Quantity': 1,
-          'Logged Protein (g)': proteinToAdd,
-          'Logged Carbs (g)': carbsToAdd,
-          'Logged Fats (g)': fatsToAdd,
-          'Date': today
-      };
-      if (!appData.dietLog) appData.dietLog = [];
-      appData.dietLog.push(newLogEntry);
-      
-      renderDashboard(); // Re-render dashboard with new values
-      renderDietSection(); // Re-render diet list
-
-      // Now send data to the backend
-      const savedMealContents = JSON.parse(meal['Contents (JSON)'] || '[]');
-      const foodLibrary = appData.foodLibrary || [];
-      const mealsToLog = savedMealContents.map(savedFood => {
-        const foodItem = foodLibrary.find(f => f['Food Item'] === savedFood['Food Item']);
-        if (!foodItem) return null;
-        const quantity = savedFood.Quantity || 1;
-        return {
-          mealType: 'Saved Meal',
-          foodItem: foodItem['Food Item'],
-          quantity: quantity,
-          protein: (parseFloat(foodItem['Protein (g)']) || 0) * quantity,
-          carbs: (parseFloat(foodItem['Carbs (g)']) || 0) * quantity,
-          fats: (parseFloat(foodItem['Fats (g)']) || 0) * quantity,
-          calories: (parseFloat(foodItem.Calories) || 0) * quantity,
-        };
-      }).filter(Boolean);
-
-      const payload = { action: 'logDiet', date: today, meals: mealsToLog };
-      const success = await postData(payload, false); // Post without success modal
-      if (!success) {
-          // If it fails, revert the optimistic update
-          appData.dietLog.pop(); // remove the item we added
-          renderDashboard();
-          renderDietSection();
-      }
-      // No need to fetchData() on success, as UI is already updated
-    }
-
-    function addFoodItem() {
-      showModal('Add Food Item', 'Enter food from your Food Library and quantity:', `
-        <div>
-          <label for="modal-food-item" class="block text-sm font-medium text-gray-400">Food Name</label>
-          <input type="text" id="modal-food-item" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required list="food-library-list" />
-          <datalist id="food-library-list">
-            ${(appData.foodLibrary || []).map(f => `<option value="${f['Food Item']}">`).join('')}
-          </datalist>
-        </div>
-        <div>
-          <label for="modal-quantity" class="block text-sm font-medium text-gray-400">Quantity</label>
-          <input type="number" step="0.1" value="1" id="modal-quantity" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
-        </div>`, `<button type="submit" form="modal-form" class="bg-lime-400 text-gray-900 font-bold py-2 px-4 rounded-lg">Add</button>
-      <button type="button" class="bg-gray-700 text-gray-200 font-bold py-2 px-4 rounded-lg" onclick="hideModal()">Cancel</button>`);
-
-      document.getElementById('modal-form').onsubmit = async (event) => {
-        event.preventDefault();
-        const foodItemName = document.getElementById('modal-food-item').value;
-        const quantity = parseFloat(document.getElementById('modal-quantity').value);
-        const food = (appData.foodLibrary || []).find(f => String(f['Food Item'] || '').toLowerCase() === String(foodItemName || '').toLowerCase());
-        if (!food) {
-          showModal('Error', 'Food item not found in your Food Library. Please check spelling.', '', `<button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
-          return;
         }
 
-        const mealToLog = [{
-          mealType: 'Manual',
-          foodItem: food['Food Item'],
-          quantity,
-          protein: (parseFloat(food['Protein (g)']) || 0) * quantity,
-          carbs: (parseFloat(food['Carbs (g)']) || 0) * quantity,
-          fats: (parseFloat(food['Fats (g)']) || 0) * quantity,
-          calories: (parseFloat(food.Calories) || 0) * quantity,
-        }];
-
-        const payload = { action: 'logDiet', date: today, meals: mealToLog };
-        const success = await postData(payload);
-        if(success) {
-            hideModal();
-            fetchData();
-        }
-      };
-    }
-
-    async function logProgress(event) {
-      event.preventDefault();
-      const form = event.target;
-      const payload = { 
-        action: 'logProgress', 
-        date: form['progress-date'].value,
-        weight: form['progress-weight'].value,
-        waist: form['progress-waist'].value || '',
-        chest: form['progress-chest'].value || '',
-        arms: form['progress-arms'].value || '',
-        thighs: form['progress-thighs'].value || '',
-        photo: form['progress-photo'].value || ''
-      };
-      const success = await postData(payload);
-      if(success) {
-        form.reset();
-        form['progress-date'].value = today;
-        fetchData();
-      }
-    }
-    
-    async function updateGoals(event) {
-        event.preventDefault();
-        const inputs = document.getElementById('goals-list').querySelectorAll('input');
-        const goalsToUpdate = {};
-        inputs.forEach(input => {
-            goalsToUpdate[input.dataset.goalName] = input.value;
-        });
-        const payload = { action: 'updateGoals', goals: goalsToUpdate };
-        const success = await postData(payload);
-        if (success) fetchData();
-    }
-
-    // ==================== ACTIVE WORKOUT (NEW & UPDATED) ====================
-    function startWorkoutSession() {
-        const todayIndex = new Date().getDay();
-        const workoutPlanToday = (appData.workoutPlan || []).find(p => dayNameToIndex(p.Day) === todayIndex);
-
-        if (!workoutPlanToday) {
-            showModal('No Workout', 'There is no workout planned for today.', '', `<button class="bg-gray-700 text-gray-200 font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
-            return;
+        /**
+         * Parses CSV text into an array of objects.
+         * @param {string} csv The raw CSV text.
+         * @returns {Object[]} An array of row objects.
+         */
+        function parseCsv(csv) {
+            const lines = csv.trim().split('\n');
+            if (lines.length < 2) return [];
+            const headers = lines[0].split(',').map(header => header.trim());
+            const rows = lines.slice(1).map(line => {
+                const values = line.split(',');
+                return headers.reduce((obj, header, index) => {
+                    obj[header] = values[index] ? values[index].trim() : '';
+                    return obj;
+                }, {});
+            });
+            return rows;
         }
 
-        const exercises = Object.values(workoutPlanToday).filter(v => v && typeof v === 'string' && v.toLowerCase() !== dayOfWeek(todayIndex).toLowerCase());
-        
-        if (exercises.length === 0) {
-            showModal('No Workout', 'No exercises found in today\'s plan.', '', `<button class="bg-gray-700 text-gray-200 font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
-            return;
+        /**
+         * Posts data to the Google Apps Script API.
+         * @param {string} sheetName The name of the target sheet.
+         * @param {Object} payload The data to be logged.
+         * @returns {Promise<any>} The response from the Apps Script.
+         */
+        async function postData(sheetName, payload) {
+            try {
+                const response = await fetch(GOOGLE_APP_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sheet: sheetName, data: payload })
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('Error posting data to Apps Script:', error);
+            }
         }
 
-        const sessionContainer = document.getElementById('active-workout-exercises');
-        sessionContainer.innerHTML = ''; // Clear previous session
-        currentWorkoutSession = []; // Clear previous logs
+        /**
+         * Main function to initialize the app.
+         */
+        async function init() {
+            try {
+                // Fetch all data concurrently
+                const [
+                    workoutsData,
+                    workoutPlanData,
+                    foodLibraryData,
+                    savedMealsData,
+                    goalsData,
+                    dietLogData
+                ] = await Promise.all([
+                    fetchData(CSV_URLS.workouts),
+                    fetchData(CSV_URLS.workoutPlan),
+                    fetchData(CSV_URLS.foodLibrary),
+                    fetchData(CSV_URLS.savedMeals),
+                    fetchData(CSV_URLS.goals),
+                    fetchData(CSV_URLS.dietLog)
+                ]);
 
-        exercises.forEach(exerciseName => {
-            const lastWorkout = (appData.workouts || [])
-                .filter(w => w.Exercise === exerciseName)
-                .sort((a, b) => new Date(b.Date) - new Date(a.Date))[0];
-            
-            const lastWeight = lastWorkout ? lastWorkout['Weight (kg)'] : '';
+                // Store data in a global object
+                data.workouts = workoutsData;
+                data.workoutPlan = workoutPlanData;
+                data.foodLibrary = foodLibraryData;
+                data.savedMeals = savedMealsData;
+                data.goals = goalsData;
+                data.dietLog = dietLogData;
 
-            const card = document.createElement('div');
-            card.className = 'bg-gray-800 rounded-lg p-4 shadow-md';
-            card.dataset.exercise = exerciseName;
-            
-            let setsHtml = '';
-            // Let's default to 3 sets if not specified
-            for (let i = 1; i <= 3; i++) {
-                setsHtml += `
-                    <div class="set-row grid grid-cols-12 gap-2 items-center" data-set-number="${i}">
-                        <span class="col-span-1 text-center font-bold text-lime-400">${i}</span>
-                        <div class="col-span-5">
-                            <label class="hidden">Reps</label>
-                            <input type="number" placeholder="Reps" class="reps-input w-full bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600">
+                // Process initial state
+                calculateDailyTotals();
+                renderDashboard();
+                renderWorkoutPlan();
+                renderSavedMeals();
+
+                // Hide loading screen
+                loadingScreen.classList.add('hidden');
+                switchView('dashboard');
+
+            } catch (error) {
+                console.error('Failed to initialize app:', error);
+                loadingScreen.innerHTML = '<p class="text-red-500">Failed to load data. Please check your sheet links.</p>';
+            }
+        }
+
+        // --- UI Rendering Functions ---
+
+        /**
+         * Renders the dashboard with daily progress and goals.
+         */
+        function renderDashboard() {
+            const proteinGoal = data.goals.find(g => g['Goal Name'] === 'Daily Protein Goal')?.Value || 0;
+            const currentProtein = dailyTotals.protein;
+
+            proteinProgressText.textContent = `${currentProtein}g / ${proteinGoal}g`;
+            const proteinPercentage = proteinGoal > 0 ? (currentProtein / proteinGoal) * 100 : 0;
+            proteinProgressBar.style.width = `${Math.min(proteinPercentage, 100)}%`;
+
+            totalCalories.textContent = Math.round(dailyTotals.calories);
+            totalCarbs.textContent = `${Math.round(dailyTotals.carbs)}g`;
+            totalFats.textContent = `${Math.round(dailyTotals.fats)}g`;
+            totalProtein.textContent = `${Math.round(dailyTotals.protein)}g`;
+        }
+
+        /**
+         * Renders the workout plan for the current day.
+         */
+        function renderWorkoutPlan() {
+            const today = new Date().toLocaleString('en-us', { weekday: 'long' });
+            const todayPlan = data.workoutPlan.find(d => d.Day === today);
+            workoutList.innerHTML = '';
+
+            if (!todayPlan) {
+                workoutList.innerHTML = '<p class="text-gray-500">No workout plan found for today.</p>';
+                return;
+            }
+
+            // Filter out empty exercise columns
+            const exercises = Object.keys(todayPlan)
+                .filter(key => key.startsWith('Exercise') && todayPlan[key] && todayPlan[key] !== '')
+                .map(key => todayPlan[key]);
+
+            exercises.forEach(exercise => {
+                const lastLog = data.workouts.filter(log => log.Exercise === exercise)
+                    .sort((a, b) => new Date(b.Date) - new Date(a.Date))[0];
+
+                const lastReps = lastLog ? lastLog.Reps : 'N/A';
+                const lastWeight = lastLog ? lastLog['Weight (kg)'] : 'N/A';
+
+                const exerciseHTML = `
+                    <div class="bg-gray-50 p-4 rounded-lg shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-lg">${exercise}</h3>
                         </div>
-                        <div class="col-span-5">
-                            <label class="hidden">Weight (kg)</label>
-                            <input type="number" step="0.5" placeholder="kg" value="${lastWeight}" class="weight-input w-full bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600">
+                        <div class="mt-2 text-sm text-gray-500">
+                            Last Set: ${lastReps} reps @ ${lastWeight} kg
                         </div>
-                        <div class="col-span-1 flex justify-center">
-                            <input type="checkbox" class="set-checkbox h-6 w-6 rounded border-gray-600 bg-gray-700 text-lime-500 focus:ring-lime-500">
+                        <div id="log-form-${exercise.replace(/\s/g, '-')}" class="mt-4 space-y-2">
+                            <!-- Sets will be added dynamically -->
+                            <div class="flex items-center gap-2">
+                                <input type="number" placeholder="Reps" class="w-1/2 p-2 rounded-lg border border-gray-300 focus:outline-none focus:border-grit-accent rep-input">
+                                <input type="number" placeholder="Weight (kg)" class="w-1/2 p-2 rounded-lg border border-gray-300 focus:outline-none focus:border-grit-accent weight-input">
+                                <button onclick="logWorkout('${exercise}')" class="bg-grit-accent text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-600 transition-colors">Log Set</button>
+                            </div>
                         </div>
                     </div>
                 `;
+                workoutList.innerHTML += exerciseHTML;
+            });
+        }
+        
+        /**
+         * Renders the saved meals list.
+         */
+        function renderSavedMeals() {
+            mealList.innerHTML = '';
+            data.savedMeals.forEach(meal => {
+                const mealContents = JSON.parse(meal['Contents (JSON)']);
+                const contentsString = mealContents.map(item => `${item.quantity} of ${item.name}`).join(', ');
+
+                const mealHTML = `
+                    <div class="card p-4 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold">${meal['Meal Name']}</h3>
+                            <p class="text-sm text-gray-500">${contentsString}</p>
+                        </div>
+                        <button onclick="logMeal('${meal['Meal Name']}')" class="bg-grit-accent text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-600 transition-colors">
+                            Log
+                        </button>
+                    </div>
+                `;
+                mealList.innerHTML += mealHTML;
+            });
+        }
+        
+        // --- State Management and Data Logging ---
+
+        /**
+         * Logs a new workout set.
+         * @param {string} exercise The name of the exercise.
+         */
+        async function logWorkout(exercise) {
+            const formId = `log-form-${exercise.replace(/\s/g, '-')}`;
+            const repsInput = document.querySelector(`#${formId} .rep-input`);
+            const weightInput = document.querySelector(`#${formId} .weight-input`);
+            const reps = repsInput.value;
+            const weight = weightInput.value;
+
+            if (!reps || !weight) {
+                alert('Please enter reps and weight.'); // Using alert as per instructions, will replace with UI later.
+                return;
             }
 
-            card.innerHTML = `
-                <h4 class="font-bold text-xl text-white mb-3">${exerciseName}</h4>
-                <div class="space-y-2">
-                    ${setsHtml}
-                </div>
-            `;
-            sessionContainer.appendChild(card);
-        });
+            const today = new Date().toLocaleDateString('en-US');
+            const newLog = {
+                Date: today,
+                Exercise: exercise,
+                Sets: '1', // Simplified to 1, user logs one set at a time
+                Reps: reps,
+                'Weight (kg)': weight,
+                Notes: ''
+            };
 
-        document.getElementById('active-workout-session').classList.remove('hidden');
-        document.getElementById('default-workout-view').classList.add('hidden');
-        switchTab('workout');
-    }
+            await postData('Workouts', newLog);
+            alert('Workout logged successfully!'); // Using alert as per instructions
+            repsInput.value = '';
+            weightInput.value = '';
+            // Refresh data to show last logged set
+            await fetchData(CSV_URLS.workouts).then(d => {
+                data.workouts = d;
+                renderWorkoutPlan();
+            });
+        }
 
-    async function finishWorkoutSession() {
-        // Collect all checked sets
-        document.querySelectorAll('#active-workout-exercises .set-row').forEach(row => {
-            const checkbox = row.querySelector('.set-checkbox');
-            if (checkbox.checked) {
-                const reps = row.querySelector('.reps-input').value;
-                const weight = row.querySelector('.weight-input').value;
-                if (reps && weight) { // Only log if both reps and weight are filled
-                    currentWorkoutSession.push({
-                        exercise: row.closest('[data-exercise]').dataset.exercise,
-                        setNumber: row.dataset.setNumber,
-                        reps: reps,
-                        weight: weight,
-                        notes: ''
-                    });
+        /**
+         * Logs a meal and updates the dashboard.
+         * @param {string} mealName The name of the meal.
+         */
+        async function logMeal(mealName) {
+            const meal = data.savedMeals.find(m => m['Meal Name'] === mealName);
+            if (!meal) return;
+            
+            const mealContents = JSON.parse(meal['Contents (JSON)']);
+            let mealProtein = 0;
+            let mealCarbs = 0;
+            let mealFats = 0;
+            let mealCalories = 0;
+
+            const today = new Date().toLocaleDateString('en-US');
+
+            for (const item of mealContents) {
+                const foodItem = data.foodLibrary.find(f => f['Food Item'] === item.name);
+                if (foodItem) {
+                    const quantity = parseFloat(item.quantity) || 0;
+                    const logEntry = {
+                        Date: today,
+                        Meal: mealName,
+                        'Food Item': foodItem['Food Item'],
+                        Quantity: quantity,
+                        'Logged Protein (g)': (parseFloat(foodItem['Protein (g)']) * quantity).toFixed(2),
+                        'Logged Carbs (g)': (parseFloat(foodItem['Carbs (g)']) * quantity).toFixed(2),
+                        'Logged Fats (g)': (parseFloat(foodItem['Fats (g)']) * quantity).toFixed(2),
+                        'Logged Calories': (parseFloat(foodItem['Calories']) * quantity).toFixed(2),
+                    };
+                    await postData('Diet Log', logEntry);
+                    
+                    mealProtein += parseFloat(logEntry['Logged Protein (g)']);
+                    mealCarbs += parseFloat(logEntry['Logged Carbs (g)']);
+                    mealFats += parseFloat(logEntry['Logged Fats (g)']);
+                    mealCalories += parseFloat(logEntry['Logged Calories']);
                 }
             }
-        });
 
-        if (currentWorkoutSession.length === 0) {
-            showModal('Empty Workout', 'No sets were logged. Nothing to save.', '', `<button class="bg-gray-700 font-bold py-2 px-4 rounded-lg" onclick="hideModal()">Cancel</button>`);
-            return;
+            dailyTotals.protein += mealProtein;
+            dailyTotals.carbs += mealCarbs;
+            dailyTotals.fats += mealFats;
+            dailyTotals.calories += mealCalories;
+
+            renderDashboard();
+            alert(`${mealName} logged successfully!`); // Using alert as per instructions
+
+            // Visually "remove" the logged meal by hiding it
+            const loggedButton = document.querySelector(`button[onclick="logMeal('${mealName}')"]`);
+            if (loggedButton) {
+                loggedButton.closest('.card').classList.add('hidden');
+            }
+        }
+        
+        /**
+         * Calculates the total macros for the current day from the diet log.
+         */
+        function calculateDailyTotals() {
+            const today = new Date().toLocaleDateString('en-US');
+            const todayLogs = data.dietLog.filter(log => log.Date === today);
+            
+            dailyTotals = {
+                calories: 0,
+                protein: 0,
+                carbs: 0,
+                fats: 0
+            };
+            
+            todayLogs.forEach(log => {
+                dailyTotals.calories += parseFloat(log['Logged Calories']) || 0;
+                dailyTotals.protein += parseFloat(log['Logged Protein (g)']) || 0;
+                dailyTotals.carbs += parseFloat(log['Logged Carbs (g)']) || 0;
+                dailyTotals.fats += parseFloat(log['Logged Fats (g)']) || 0;
+            });
         }
 
-        const payload = {
-            action: 'logWorkoutSession',
-            date: today,
-            sets: currentWorkoutSession
-        };
+        // --- UI Interactions ---
 
-        const success = await postData(payload);
-
-        if (success) {
-            document.getElementById('active-workout-session').classList.add('hidden');
-            document.getElementById('default-workout-view').classList.remove('hidden');
-            fetchData(); // Refresh the workout log
+        /**
+         * Switches the active view and navigation button.
+         * @param {string} viewName The name of the view to switch to.
+         */
+        function switchView(viewName) {
+            Object.keys(views).forEach(key => {
+                views[key].classList.add('hidden');
+                navButtons[key].classList.remove('text-grit-accent', 'border-b-2', 'border-grit-accent');
+                navButtons[key].classList.add('text-gray-500');
+            });
+            views[viewName].classList.remove('hidden');
+            navButtons[viewName].classList.remove('text-gray-500');
+            navButtons[viewName].classList.add('text-grit-accent', 'border-b-2', 'border-grit-accent');
         }
-    }
 
+        // Event listeners for navigation
+        navButtons.dashboard.addEventListener('click', () => switchView('dashboard'));
+        navButtons.workouts.addEventListener('click', () => switchView('workouts'));
+        navButtons.diet.addEventListener('click', () => switchView('diet'));
 
-    function dayOfWeek(dayIndex) {
-        return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][dayIndex];
-    }
-    
-    // ==================== NAV ====================
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('text-lime-400'));
-      document.getElementById(`nav-${tabId}`).classList.add('text-lime-400');
-    }
+        // Start the application
+        window.onload = init;
+    </script>
 
-    // ==================== EVENTS ====================
-    document.getElementById('log-workout-btn').addEventListener('click', logWorkout);
-    document.getElementById('start-workout-btn').addEventListener('click', startWorkoutSession);
-    document.getElementById('finish-workout-btn').addEventListener('click', finishWorkoutSession);
-    
-    // Event delegation for delete buttons
-    document.getElementById('workout-log-list').addEventListener('click', (event) => {
-        const deleteBtn = event.target.closest('.delete-workout-btn');
-        if (deleteBtn) {
-            const rowIndex = deleteBtn.dataset.rowIndex;
-            confirmDeleteWorkout(rowIndex);
-        }
-    });
-
-    document.getElementById('log-meal-btn').addEventListener('click', addFoodItem);
-    document.getElementById('log-progress-form').addEventListener('submit', logProgress);
-    document.getElementById('update-goals-form').addEventListener('submit', updateGoals);
-
-    navItems.dashboard.addEventListener('click', () => switchTab('dashboard'));
-    navItems.workout.addEventListener('click', () => switchTab('workout'));
-    navItems.diet.addEventListener('click', () => switchTab('diet'));
-    navItems.progress.addEventListener('click', () => switchTab('progress'));
-    navItems.settings.addEventListener('click', () => switchTab('settings'));
-
-    // ==================== INIT ====================
-    document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('progress-date').value = today;
-        fetchData();
-    });
-  </script>
 </body>
 </html>
