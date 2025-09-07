@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>GRIT: Track yyou</title>
+  <title>GRIT: Track you</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/dist/phosphor.js"></script>
@@ -77,13 +77,27 @@
 
     <!-- Workout Section -->
     <div id="workout" class="tab-content p-2">
-      <h2 class="text-2xl font-bold mb-4 text-lime-400">Workout Log</h2>
-      <div id="workout-log-list" class="space-y-4">
-        <p class="text-center text-gray-400">Use the button below to start logging your workout.</p>
+      <!-- This view is for the active, guided workout -->
+      <div id="active-workout-session" class="hidden">
+        <h2 class="text-2xl font-bold mb-4 text-lime-400">Today's Session</h2>
+        <div id="active-workout-exercises" class="space-y-4">
+          <!-- Exercise cards will be injected here by JS -->
+        </div>
+        <button id="finish-workout-btn" class="mt-6 w-full bg-gray-600 text-gray-200 font-bold py-3 rounded-lg transition hover:bg-gray-500">
+          Finish Workout
+        </button>
       </div>
-      <button id="log-workout-btn" class="mt-6 w-full bg-lime-400 text-gray-900 font-bold py-3 rounded-lg transition hover:bg-lime-300 shadow-xl">
-        Log Workout
-      </button>
+
+      <!-- This is the default view showing the log history -->
+      <div id="default-workout-view">
+        <h2 class="text-2xl font-bold mb-4 text-lime-400">Workout Log</h2>
+        <div id="workout-log-list" class="space-y-4">
+          <p class="text-center text-gray-400">Start a workout from the Home tab or log a single exercise below.</p>
+        </div>
+        <button id="log-workout-btn" class="mt-6 w-full bg-lime-400 text-gray-900 font-bold py-3 rounded-lg transition hover:bg-lime-300 shadow-xl">
+          Log Single Exercise
+        </button>
+      </div>
     </div>
 
     <!-- Diet Section -->
@@ -138,7 +152,6 @@
         </div>
         <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
           <h3 class="text-xl font-semibold text-gray-200 mb-2">Log Progress</h3>
-          <!-- UPDATED FORM with new measurement fields -->
           <form id="log-progress-form" class="space-y-4">
             <div>
               <label for="progress-date" class="block text-sm font-medium text-gray-400">Date</label>
@@ -268,14 +281,13 @@
     }
 
     // ==================== FETCH HELPERS ====================
-    async function postData(payload) {
+    async function postData(payload, showSuccessModal = true) {
       showLoading(true);
       try {
         const body = new URLSearchParams();
         body.set('action', payload.action);
         body.set('data', JSON.stringify(payload));
         
-        console.log(`Sending POST request with action: ${payload.action}`);
         const response = await fetch(appsScriptURL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -289,17 +301,21 @@
           data = JSON.parse(text); 
         } catch (e) {
           console.error("Non-JSON response from server:", text);
-          throw new Error('Non-JSON response from server. Check your Apps Script deployment and permissions.');
+          throw new Error('Non-JSON response from server. Check deployment.');
         }
 
         if (data.success) {
-            showModal('Success', data.message || 'Operation successful!', '', `<button class="bg-lime-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
+            if (showSuccessModal) {
+              showModal('Success', data.message || 'Operation successful!', '', `<button class="bg-lime-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
+            }
         } else {
             throw new Error(data.error || 'An unknown error occurred.');
         }
+        return data.success; // Return success status
       } catch (error) {
         showModal('Connection Error', `Could not save data. Error: ${error.message}`, '', `<button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
         console.error('Error posting data:', error);
+        return false; // Return failure status
       } finally {
         showLoading(false);
       }
@@ -309,12 +325,9 @@
       showLoading(true);
       try {
         const url = `${appsScriptURL}?action=getDashboardData&cb=${Date.now()}`;
-        console.log('Attempting to fetch data from URL:', url);
         const response = await fetch(url, { mode: 'cors' });
         
-        if (!response.ok) {
-            throw new Error(`Network response was not ok: ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
 
         const text = await response.text();
         let responseData;
@@ -322,7 +335,6 @@
 
         if (responseData.success) {
           appData = responseData.data;
-          console.log('Data fetched:', appData);
           renderApp();
         } else {
           throw new Error(responseData.error || 'The script returned an error.');
@@ -373,8 +385,10 @@
             workoutPlanList.appendChild(p);
           }
         });
+        document.getElementById('start-workout-btn').disabled = false;
       } else {
         workoutPlanList.innerHTML = '<p>No workout planned for today.</p>';
+        document.getElementById('start-workout-btn').disabled = true;
       }
 
       const recentPRs = findRecentPRs();
@@ -390,23 +404,24 @@
     }
 
     function renderWorkoutSection() {
-      const workoutLogList = document.getElementById('workout-log-list');
-      workoutLogList.innerHTML = '';
-      const workouts = (appData.workouts || []).slice().sort((a, b) => new Date(b.Date) - new Date(a.Date));
-      if (workouts.length > 0) {
-        workouts.forEach(log => {
-          const workoutCard = document.createElement('div');
-          workoutCard.className = 'bg-gray-800 rounded-lg p-4 shadow-md';
-          workoutCard.innerHTML = `
-            <h4 class="font-bold text-lime-400">${log.Date} - ${log.Exercise}</h4>
-            <p>Sets: ${log.Sets}, Reps: ${log.Reps}, Weight: ${log['Weight (kg)']}kg</p>
-            <p class="text-sm text-gray-400">Notes: ${log.Notes || ''}</p>`;
-          workoutLogList.appendChild(workoutCard);
-        });
-      } else {
-        workoutLogList.innerHTML = '<p class="text-center text-gray-400">No workouts logged yet.</p>';
-      }
+        const workoutLogList = document.getElementById('workout-log-list');
+        workoutLogList.innerHTML = '';
+        const workouts = (appData.workouts || []).slice().sort((a, b) => new Date(b.Date) - new Date(a.Date));
+        if (workouts.length > 0) {
+            workouts.forEach(log => {
+                const workoutCard = document.createElement('div');
+                workoutCard.className = 'bg-gray-800 rounded-lg p-4 shadow-md';
+                workoutCard.innerHTML = `
+                    <h4 class="font-bold text-lime-400">${log.Date} - ${log.Exercise}</h4>
+                    <p>Sets: ${log.Sets}, Reps: ${log.Reps}, Weight: ${log['Weight (kg)']}kg</p>
+                    <p class="text-sm text-gray-400">Notes: ${log.Notes || ''}</p>`;
+                workoutLogList.appendChild(workoutCard);
+            });
+        } else {
+            workoutLogList.innerHTML = '<p class="text-center text-gray-400">No workouts logged yet.</p>';
+        }
     }
+
 
     function renderDietSection() {
       const goals = (appData.goals || []).reduce((acc, g) => ({ ...acc, [g['Goal Name']]: g.Value }), {});
@@ -515,7 +530,7 @@
     }
 
     function logWorkout() {
-      showModal('Log Workout', 'Enter your workout details:', `
+      showModal('Log Single Exercise', 'Enter your workout details:', `
         <div>
           <label for="modal-exercise" class="block text-sm font-medium text-gray-400">Exercise</label>
           <input type="text" id="modal-exercise" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
@@ -549,9 +564,11 @@
             weight: document.getElementById('modal-weight').value,
             notes: document.getElementById('modal-notes').value,
         };
-        await postData(payload);
-        hideModal();
-        fetchData();
+        const success = await postData(payload);
+        if (success) {
+            hideModal();
+            fetchData();
+        }
       };
     }
 
@@ -622,7 +639,6 @@
       };
     }
 
-    // UPDATED FUNCTION to send new measurement data
     async function logProgress(event) {
       event.preventDefault();
       const form = event.target;
@@ -636,10 +652,12 @@
         thighs: form['progress-thighs'].value || '',
         photo: form['progress-photo'].value || ''
       };
-      await postData(payload);
-      form.reset();
-      form['progress-date'].value = today;
-      fetchData();
+      const success = await postData(payload);
+      if(success) {
+        form.reset();
+        form['progress-date'].value = today;
+        fetchData();
+      }
     }
     
     async function updateGoals(event) {
@@ -650,10 +668,72 @@
             goalsToUpdate[input.dataset.goalName] = input.value;
         });
         const payload = { action: 'updateGoals', goals: goalsToUpdate };
-        await postData(payload);
-        fetchData();
+        const success = await postData(payload);
+        if (success) fetchData();
     }
 
+    // ==================== ACTIVE WORKOUT ====================
+    function startWorkoutSession() {
+        const todayIndex = new Date().getDay();
+        const workoutPlanToday = (appData.workoutPlan || []).find(p => dayNameToIndex(p.Day) === todayIndex);
+
+        if (!workoutPlanToday) {
+            showModal('No Workout', 'There is no workout planned for today.', '', `<button class="bg-gray-700 text-gray-200 font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
+            return;
+        }
+
+        const exercises = Object.values(workoutPlanToday).filter(v => v && typeof v === 'string' && v.toLowerCase() !== dayOfWeek(todayIndex).toLowerCase());
+        
+        if (exercises.length === 0) {
+            showModal('No Workout', 'No exercises found in today\'s plan.', '', `<button class="bg-gray-700 text-gray-200 font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
+            return;
+        }
+
+        const sessionContainer = document.getElementById('active-workout-exercises');
+        sessionContainer.innerHTML = ''; // Clear previous session
+
+        exercises.forEach(exerciseName => {
+            const exerciseId = exerciseName.replace(/\s+/g, '-');
+            const card = document.createElement('div');
+            card.className = 'bg-gray-800 rounded-lg p-4 shadow-md';
+            card.innerHTML = `
+                <form class="exercise-form space-y-3" data-exercise="${exerciseName}">
+                    <h4 class="font-bold text-xl text-white">${exerciseName}</h4>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label for="sets-${exerciseId}" class="block text-sm font-medium text-gray-400">Sets</label>
+                            <input type="number" id="sets-${exerciseId}" class="sets-input w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+                        </div>
+                        <div>
+                            <label for="reps-${exerciseId}" class="block text-sm font-medium text-gray-400">Reps</label>
+                            <input type="number" id="reps-${exerciseId}" class="reps-input w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+                        </div>
+                        <div>
+                            <label for="weight-${exerciseId}" class="block text-sm font-medium text-gray-400">Weight (kg)</label>
+                            <input type="number" step="0.1" id="weight-${exerciseId}" class="weight-input w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-lime-400 text-gray-900 font-bold py-2 rounded-lg transition hover:bg-lime-300">Log Exercise</button>
+                </form>
+            `;
+            sessionContainer.appendChild(card);
+        });
+
+        document.getElementById('active-workout-session').classList.remove('hidden');
+        document.getElementById('default-workout-view').classList.add('hidden');
+        switchTab('workout');
+    }
+
+    function finishWorkoutSession() {
+        document.getElementById('active-workout-session').classList.add('hidden');
+        document.getElementById('default-workout-view').classList.remove('hidden');
+        fetchData(); // Refresh the workout log
+    }
+
+    function dayOfWeek(dayIndex) {
+        return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][dayIndex];
+    }
+    
     // ==================== NAV ====================
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -664,7 +744,42 @@
 
     // ==================== EVENTS ====================
     document.getElementById('log-workout-btn').addEventListener('click', logWorkout);
-    document.getElementById('start-workout-btn').addEventListener('click', () => switchTab('workout'));
+    document.getElementById('start-workout-btn').addEventListener('click', startWorkoutSession);
+    document.getElementById('finish-workout-btn').addEventListener('click', finishWorkoutSession);
+    document.getElementById('active-workout-exercises').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.target.closest('.exercise-form');
+        if (!form) return;
+
+        const exerciseName = form.dataset.exercise;
+        const button = form.querySelector('button[type="submit"]');
+
+        const payload = {
+            action: 'logWorkout',
+            date: today,
+            exercise: exerciseName,
+            sets: form.querySelector('.sets-input').value,
+            reps: form.querySelector('.reps-input').value,
+            weight: form.querySelector('.weight-input').value,
+            notes: ''
+        };
+        
+        button.disabled = true;
+        button.textContent = 'Logging...';
+
+        const success = await postData(payload, false); // Post data without showing success modal
+
+        if(success) {
+            button.textContent = 'Logged ✔';
+            button.classList.remove('bg-lime-400', 'hover:bg-lime-300');
+            button.classList.add('bg-green-600', 'cursor-not-allowed');
+        } else {
+            button.disabled = false;
+            button.textContent = 'Log Exercise';
+            // Optionally show an error message specific to this exercise
+        }
+    });
+
     document.getElementById('log-meal-btn').addEventListener('click', addFoodItem);
     document.getElementById('log-progress-form').addEventListener('submit', logProgress);
     document.getElementById('update-goals-form').addEventListener('submit', updateGoals);
