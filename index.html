@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gritt - 1My Fitness Tracker</title>
+    <title>Gritt - My Fitness Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -346,6 +346,9 @@
             const timerDisplay = document.getElementById('timer-display');
             const startTimerBtn = document.getElementById('start-timer-btn');
             const resetTimerBtn = document.getElementById('reset-timer-btn');
+            const progressForm = document.getElementById('progress-form');
+            const progressMessage = document.getElementById('progress-message');
+
 
             // Function to show a specific tab
             function showTab(tabId) {
@@ -731,9 +734,6 @@
             });
 
             // --- Progress Tab Logic ---
-            const progressForm = document.getElementById('progress-form');
-            const progressMessage = document.getElementById('progress-message');
-
             function checkDay() {
                 const today = new Date();
                 if (today.getDay() !== 0) { // Sunday is 0
