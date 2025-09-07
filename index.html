@@ -14,6 +14,22 @@
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     .chart-container { position: relative; width: 100%; height: 300px; }
+    .workout-card-container { position: relative; }
+    .delete-workout-btn {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        background: transparent;
+        border: none;
+        color: #ef4444; /* red-500 */
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 9999px;
+        transition: background-color 0.2s;
+    }
+    .delete-workout-btn:hover {
+        background-color: rgba(239, 68, 68, 0.1);
+    }
   </style>
 </head>
 <body class="bg-gray-900 text-gray-200 font-sans p-4 flex flex-col min-h-screen pb-24">
@@ -158,26 +174,26 @@
               <input type="date" id="progress-date" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600 focus:border-lime-400 focus:ring focus:ring-lime-400 focus:ring-opacity-50" required />
             </div>
             <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label for="progress-weight" class="block text-sm font-medium text-gray-400">Weight (kg)</label>
-                  <input type="number" step="0.1" id="progress-weight" placeholder="e.g., 75.5" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
-                </div>
-                <div>
-                  <label for="progress-waist" class="block text-sm font-medium text-gray-400">Waist (in)</label>
-                  <input type="number" step="0.1" id="progress-waist" placeholder="e.g., 32" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" />
-                </div>
-                <div>
-                  <label for="progress-chest" class="block text-sm font-medium text-gray-400">Chest (in)</label>
-                  <input type="number" step="0.1" id="progress-chest" placeholder="e.g., 40" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" />
-                </div>
-                <div>
-                  <label for="progress-arms" class="block text-sm font-medium text-gray-400">Arms (in)</label>
-                  <input type="number" step="0.1" id="progress-arms" placeholder="e.g., 14" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" />
-                </div>
-                 <div>
-                  <label for="progress-thighs" class="block text-sm font-medium text-gray-400">Thighs (in)</label>
-                  <input type="number" step="0.1" id="progress-thighs" placeholder="e.g., 23" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" />
-                </div>
+              <div>
+                <label for="progress-weight" class="block text-sm font-medium text-gray-400">Weight (kg)</label>
+                <input type="number" step="0.1" id="progress-weight" placeholder="e.g., 75.5" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" required />
+              </div>
+              <div>
+                <label for="progress-waist" class="block text-sm font-medium text-gray-400">Waist (in)</label>
+                <input type="number" step="0.1" id="progress-waist" placeholder="e.g., 32" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" />
+              </div>
+              <div>
+                <label for="progress-chest" class="block text-sm font-medium text-gray-400">Chest (in)</label>
+                <input type="number" step="0.1" id="progress-chest" placeholder="e.g., 40" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" />
+              </div>
+              <div>
+                <label for="progress-arms" class="block text-sm font-medium text-gray-400">Arms (in)</label>
+                <input type="number" step="0.1" id="progress-arms" placeholder="e.g., 14" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" />
+              </div>
+               <div>
+                <label for="progress-thighs" class="block text-sm font-medium text-gray-400">Thighs (in)</label>
+                <input type="number" step="0.1" id="progress-thighs" placeholder="e.g., 23" class="w-full mt-1 bg-gray-700 text-gray-200 p-2 rounded-lg border border-gray-600" />
+              </div>
             </div>
             <div>
               <label for="progress-photo" class="block text-sm font-medium text-gray-400">Photo Link</label>
@@ -410,8 +426,11 @@
         if (workouts.length > 0) {
             workouts.forEach(log => {
                 const workoutCard = document.createElement('div');
-                workoutCard.className = 'bg-gray-800 rounded-lg p-4 shadow-md';
+                workoutCard.className = 'workout-card-container bg-gray-800 rounded-lg p-4 shadow-md';
                 workoutCard.innerHTML = `
+                    <button class="delete-workout-btn" data-row-index="${log.rowIndex}" aria-label="Delete workout">
+                        <i class="ph-trash text-xl"></i>
+                    </button>
                     <h4 class="font-bold text-lime-400">${log.Date} - ${log.Exercise}</h4>
                     <p>Sets: ${log.Sets}, Reps: ${log.Reps}, Weight: ${log['Weight (kg)']}kg</p>
                     <p class="text-sm text-gray-400">Notes: ${log.Notes || ''}</p>`;
@@ -571,6 +590,43 @@
         }
       };
     }
+    
+    // --- NEW --- Function to confirm and handle workout deletion
+    function confirmDeleteWorkout(rowIndex) {
+        const workoutToDelete = appData.workouts.find(w => w.rowIndex == rowIndex);
+        if (!workoutToDelete) return;
+
+        showModal(
+            'Confirm Deletion', 
+            `Are you sure you want to delete the workout: ${workoutToDelete.Exercise} on ${workoutToDelete.Date}?`, 
+            '', 
+            `<button id="confirm-delete-btn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg">Delete</button>
+             <button type="button" class="bg-gray-700 text-gray-200 font-bold py-2 px-4 rounded-lg" onclick="hideModal()">Cancel</button>`
+        );
+
+        document.getElementById('confirm-delete-btn').onclick = () => handleDeleteWorkout(rowIndex);
+    }
+
+    async function handleDeleteWorkout(rowIndex) {
+        const payload = { action: 'deleteWorkout', rowIndex: Number(rowIndex) };
+        const success = await postData(payload, false); // Don't show generic success modal
+
+        if (success) {
+            // --- OPTIMIZATION ---
+            // Update local state and re-render instantly instead of full fetchData()
+            const indexToRemove = appData.workouts.findIndex(w => w.rowIndex == rowIndex);
+            if (indexToRemove > -1) {
+                appData.workouts.splice(indexToRemove, 1);
+            }
+            renderWorkoutSection(); // Re-render only the workout list
+            renderDashboard(); // Re-render dashboard to update PRs
+            showModal('Deleted', 'The workout entry has been removed.', '', `<button class="bg-lime-500 text-white font-bold py-2 px-4 rounded-lg" onclick="hideModal()">OK</button>`);
+        } else {
+            // Error modal is already shown by postData()
+            hideModal(); // Hide the confirmation modal if delete fails
+        }
+    }
+
 
     async function logSavedMeal(meal) {
       showModal('Logging Meal', `Logging "${meal['Meal Name']}" to your diet log...`);
@@ -779,6 +835,15 @@
             // Optionally show an error message specific to this exercise
         }
     });
+    
+    // --- NEW --- Event delegation for delete buttons
+    document.getElementById('workout-log-list').addEventListener('click', (event) => {
+        const deleteBtn = event.target.closest('.delete-workout-btn');
+        if (deleteBtn) {
+            const rowIndex = deleteBtn.dataset.rowIndex;
+            confirmDeleteWorkout(rowIndex);
+        }
+    });
 
     document.getElementById('log-meal-btn').addEventListener('click', addFoodItem);
     document.getElementById('log-progress-form').addEventListener('submit', logProgress);
@@ -798,4 +863,3 @@
   </script>
 </body>
 </html>
-
