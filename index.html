@@ -3,15 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gritt - My Fitness Tracker</title>
+    <title>Grit - My Fitness Tracker</title>
+    <!-- Inter font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #2196F3;
+            --background-color: #121212;
+            --card-color: #1E1E1E;
+            --text-color: #E0E0E0;
+            --input-bg: #2D2D2D;
+            --input-border: #444;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #121212;
-            color: #E0E0E0;
-            padding-bottom: 6rem; /* Space for the fixed footer */
+            background-color: var(--background-color);
+            color: var(--text-color);
+            padding-bottom: 6rem;
+            min-height: 100vh;
         }
         .logo-container {
             display: flex;
@@ -25,34 +41,31 @@
             line-height: 1;
         }
         .logo-text span:first-child {
-            color: #2196F3;
+            color: var(--secondary-color);
         }
         .logo-text span:last-child {
-            color: #4CAF50;
+            color: var(--primary-color);
         }
         .grit-shield {
-            width: 50px;
-            height: 50px;
-            fill: #2196F3;
-            stroke: #4CAF50;
+            fill: var(--secondary-color);
+            stroke: var(--primary-color);
             stroke-width: 2px;
         }
         .arm-icon {
-            width: 40px;
-            height: 40px;
-            fill: #4CAF50;
+            fill: var(--primary-color);
         }
         .card {
-            background-color: #1E1E1E;
+            background-color: var(--card-color);
             border-radius: 1rem;
             padding: 1.5rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
         }
         input, select, textarea {
-            background-color: #2D2D2D;
-            border: 1px solid #444;
-            color: #E0E0E0;
+            background-color: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-color);
             border-radius: 0.5rem;
+            padding: 0.75rem;
         }
         .btn {
             padding: 0.75rem 1.5rem;
@@ -61,7 +74,7 @@
             transition: all 0.2s;
         }
         .btn-primary {
-            background-color: #4CAF50;
+            background-color: var(--primary-color);
             color: white;
         }
         .btn-primary:hover {
@@ -69,14 +82,14 @@
             transform: translateY(-2px);
         }
         .progress-bar {
-            background-color: #2D2D2D;
+            background-color: var(--input-bg);
             border-radius: 9999px;
             height: 8px;
             overflow: hidden;
         }
         .progress-fill {
             height: 100%;
-            background-color: #4CAF50;
+            background-color: var(--primary-color);
             transition: width 0.5s ease-in-out;
         }
         .footer-nav {
@@ -84,7 +97,7 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background-color: #1E1E1E;
+            background-color: var(--card-color);
             box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.2);
             z-index: 50;
         }
@@ -98,10 +111,10 @@
             transition: color 0.2s;
         }
         .nav-item.active {
-            color: #4CAF50;
+            color: var(--primary-color);
         }
         .nav-item:hover {
-            color: #4CAF50;
+            color: var(--primary-color);
         }
         .workout-card {
             min-height: 400px;
@@ -118,13 +131,64 @@
             background-color: #2D2D2D;
         }
         .history-container {
-            border-left: 2px solid #4CAF50;
+            border-left: 2px solid var(--primary-color);
             padding-left: 1rem;
             margin-top: 1rem;
+        }
+
+        /* Custom Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.2s ease-in-out;
+        }
+
+        .modal.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background-color: var(--card-color);
+            color: var(--text-color);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .modal-content p {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-content button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
         }
     </style>
 </head>
 <body class="p-4 sm:p-8">
+
+    <!-- Custom Modal for Messages -->
+    <div id="message-modal" class="modal">
+        <div class="modal-content">
+            <p id="modal-message"></p>
+            <button class="btn btn-primary" onclick="document.getElementById('message-modal').classList.remove('visible')">OK</button>
+        </div>
+    </div>
 
     <div class="max-w-4xl mx-auto">
         <!-- Logo and Title -->
@@ -141,6 +205,7 @@
                 <path d="M16 11c0 2.2-1.8 4-4 4s-4-1.8-4-4 1.8-4 4-4 4 1.8 4 4z"/>
             </svg>
         </div>
+        <!-- User ID display removed as it is not applicable for Google Apps Script -->
 
         <!-- Content Area -->
         <div id="dashboard-content" class="content-tab">
@@ -244,7 +309,7 @@
             <div class="card">
                 <h2 class="text-xl font-bold mb-4">Log a Meal</h2>
                 <form id="meal-form" class="space-y-4">
-                    <input type="text" id="food-item" placeholder="Food Item" class="w-full p-2 rounded-lg">
+                    <input type="text" id="food-item" placeholder="Food Item" class="w-full p-2 rounded-lg" required>
                     <select id="meal-type" class="w-full p-2 rounded-lg">
                         <option value="Breakfast">Breakfast</option>
                         <option value="Lunch">Lunch</option>
@@ -272,7 +337,7 @@
                 <h2 class="text-xl font-bold mb-4">Record This Week's Progress</h2>
                 <p id="progress-message" class="text-sm mb-4 text-center"></p>
                 <form id="progress-form" class="space-y-4">
-                    <input type="number" id="weight" placeholder="Weight (kg)" class="w-full p-2 rounded-lg">
+                    <input type="number" id="weight" placeholder="Weight (kg)" class="w-full p-2 rounded-lg" required>
                     <input type="number" id="waist" placeholder="Waist (cm)" class="w-full p-2 rounded-lg">
                     <input type="number" id="chest" placeholder="Chest (cm)" class="w-full p-2 rounded-lg">
                     <input type="number" id="arms" placeholder="Arms (cm)" class="w-full p-2 rounded-lg">
@@ -315,7 +380,16 @@
     </div>
 
     <script>
-        const API_URL = "<?!= ScriptApp.getService().getUrl(); ?>";
+        // NOTE: If you receive a "Failed to fetch" error again, please ensure your Google Apps Script is deployed
+        // with "Who has access" set to "Anyone" and a valid, working URL is used here.
+        const API_URL = "https://script.google.com/macros/s/AKfycby2z3TkdkEqxxKL1hbIG4OtbiH0W9PEL9lQiAWel89szyHZzHo2ZNkTLoWSrneY8mbY/exec";
+
+        // Message Modal function to replace native alerts
+        function showMessage(message) {
+            const modal = document.getElementById('message-modal');
+            document.getElementById('modal-message').textContent = message;
+            modal.classList.add('visible');
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             const navItems = document.querySelectorAll('.nav-item');
@@ -349,7 +423,6 @@
             const progressForm = document.getElementById('progress-form');
             const progressMessage = document.getElementById('progress-message');
 
-
             // Function to show a specific tab
             function showTab(tabId) {
                 contents.forEach(content => content.classList.add('hidden'));
@@ -380,7 +453,10 @@
 
             // Workout view button listeners
             flashcardViewBtn.addEventListener('click', () => showWorkoutView('flashcard-view'));
-            listViewBtn.addEventListener('click', () => showWorkoutView('list-view'));
+            listViewBtn.addEventListener('click', () => {
+                renderListView();
+                showWorkoutView('list-view');
+            });
 
             // Initial data loads
             loadDashboardData();
@@ -440,7 +516,7 @@
             // Flash Card View
             startWorkoutBtn.addEventListener('click', () => {
                 if (workoutSchedule.length === 0) {
-                    alert("No workout planned for today. Please check your schedule.");
+                    showMessage("No workout planned for today. Please check your schedule.");
                     return;
                 }
                 workoutStartPage.classList.add('hidden');
@@ -452,7 +528,7 @@
             async function loadExerciseCard(index) {
                 const exerciseName = workoutSchedule[index];
                 if (!exerciseName) {
-                    alert("Workout complete! Great job!");
+                    showMessage("Workout complete! Great job!");
                     workoutStartPage.classList.remove('hidden');
                     workoutCardContainer.classList.add('hidden');
                     return;
@@ -499,7 +575,7 @@
                 const weight = setEntriesContainer.querySelector('.set-weight').value;
                 
                 if (!reps || !weight) {
-                    alert('Please enter reps and weight.');
+                    showMessage('Please enter reps and weight.');
                     return;
                 }
                 
@@ -511,18 +587,23 @@
                     weight: parseFloat(weight)
                 }];
 
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'logWorkout', data: sets })
-                });
-                const data = await response.json();
-                if (data.status === 'success') {
-                    alert('Set logged successfully!');
-                    setEntriesContainer.innerHTML = '';
-                    addSetInput(1);
-                    resetTimer();
-                } else {
-                    alert('Error logging set: ' + data.message);
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'logWorkout', data: sets })
+                    });
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        showMessage('Set logged successfully!');
+                        setEntriesContainer.innerHTML = '';
+                        addSetInput(1);
+                        resetTimer();
+                    } else {
+                        showMessage('Error logging set: ' + data.message);
+                    }
+                } catch (error) {
+                    console.error("Error logging workout set:", error);
+                    showMessage('Error logging set. Please try again.');
                 }
             });
 
@@ -538,7 +619,7 @@
                     currentExerciseIndex++;
                     loadExerciseCard(currentExerciseIndex);
                 } else {
-                    alert("Workout complete! You've done all the exercises for today.");
+                    showMessage("Workout complete! You've done all the exercises for today.");
                     showTab('dashboard-content');
                     workoutStartPage.classList.remove('hidden');
                     workoutCardContainer.classList.add('hidden');
@@ -581,7 +662,7 @@
                                 <button class="btn btn-primary log-list-set-btn" data-exercise="${exercise}">Log</button>
                             </div>
                             <div class="history-container mt-4">
-                                <h4 class="font-semibold mb-2">Previous 3 Weeks:</h4>
+                                <h4 class="font-semibold mb-2">Previous Logs:</h4>
                                 <div class="history-content text-sm text-gray-400">Loading history...</div>
                             </div>
                         </div>
@@ -589,19 +670,17 @@
                     listContainer.appendChild(exerciseItem);
 
                     // Fetch and display history
-                    if (!isCompleted) {
-                         const historyContent = exerciseItem.querySelector('.history-content');
-                         const response = await fetch(`${API_URL}?action=getPreviousWorkout&exercise=${encodeURIComponent(exercise)}`);
-                         const data = await response.json();
-                         if (data.status === 'success' && data.previousWorkout.length > 0) {
-                             const historyHtml = data.previousWorkout.map(log => `
-                                 <p><strong>${log.Date}:</strong> Set ${log['Set #']} - ${log.Reps} reps @ ${log['Weight (kg)']}kg</p>
-                             `).join('');
-                             historyContent.innerHTML = historyHtml;
-                         } else {
-                             historyContent.textContent = "No history found for this exercise.";
-                         }
-                     }
+                    const historyContent = exerciseItem.querySelector('.history-content');
+                    const response = await fetch(`${API_URL}?action=getPreviousWorkout&exercise=${encodeURIComponent(exercise)}`);
+                    const data = await response.json();
+                    if (data.status === 'success' && data.previousWorkout.length > 0) {
+                        const historyHtml = data.previousWorkout.map(log => `
+                            <p><strong>${log.Date}:</strong> Set ${log['Set #']} - ${log.Reps} reps @ ${log['Weight (kg)']}kg</p>
+                        `).join('');
+                        historyContent.innerHTML = historyHtml;
+                    } else {
+                        historyContent.textContent = "No history found for this exercise.";
+                    }
 
                     // Handle expand/collapse and log set
                     exerciseItem.addEventListener('click', (e) => {
@@ -620,7 +699,7 @@
                         const exerciseToLog = e.target.getAttribute('data-exercise');
                         
                         if (!reps || !weight) {
-                            alert('Please enter reps and weight.');
+                            showMessage('Please enter reps and weight.');
                             return;
                         }
 
@@ -632,16 +711,21 @@
                             weight: parseFloat(weight)
                         }];
 
-                        const logResponse = await fetch(API_URL, {
-                            method: 'POST',
-                            body: JSON.stringify({ action: 'logWorkout', data: sets })
-                        });
-                        const logData = await logResponse.json();
-                        if (logData.status === 'success') {
-                            alert('Set logged successfully!');
-                            renderListView(); // Re-render the list to show the new log
-                        } else {
-                            alert('Error logging set: ' + logData.message);
+                        try {
+                            const logResponse = await fetch(API_URL, {
+                                method: 'POST',
+                                body: JSON.stringify({ action: 'logWorkout', data: sets })
+                            });
+                            const logData = await logResponse.json();
+                            if (logData.status === 'success') {
+                                showMessage('Set logged successfully!');
+                                renderListView(); // Re-render the list to show the new log
+                            } else {
+                                showMessage('Error logging set: ' + logData.message);
+                            }
+                        } catch (error) {
+                            console.error("Error logging workout set:", error);
+                            showMessage('Error logging set. Please try again.');
                         }
                     });
                 });
@@ -718,18 +802,23 @@
                     calories: parseFloat(document.getElementById('calories').value) || 0
                 };
 
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'logDiet', data: mealData })
-                });
-                const data = await response.json();
-                if (data.status === 'success') {
-                    alert('Meal logged successfully!');
-                    mealForm.reset();
-                    loadDietData();
-                    loadDashboardData();
-                } else {
-                    alert('Error logging meal: ' + data.message);
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'logDiet', data: mealData })
+                    });
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        showMessage('Meal logged successfully!');
+                        mealForm.reset();
+                        loadDietData();
+                        loadDashboardData();
+                    } else {
+                        showMessage('Error logging meal: ' + data.message);
+                    }
+                } catch (error) {
+                    console.error('Error logging meal:', error);
+                    showMessage('Error logging meal. Please try again.');
                 }
             });
 
@@ -738,38 +827,42 @@
                 const today = new Date();
                 if (today.getDay() !== 0) { // Sunday is 0
                     progressMessage.textContent = "You can only record your progress on Sundays.";
-                    progressForm.style.display = 'none';
+                    progressForm.classList.add('hidden');
                 } else {
                     progressMessage.textContent = "It's Sunday! Time to record your progress.";
-                    progressForm.style.display = 'block';
+                    progressForm.classList.remove('hidden');
                 }
             }
 
             async function loadProgressHistory() {
-                const response = await fetch(`${API_URL}?action=getProgressHistory`);
-                const data = await response.json();
-                if (data.status === 'success') {
-                    const progressList = document.getElementById('progress-list');
-                    progressList.innerHTML = '';
-                    progressHistory = data.history;
-                    progressHistory.forEach(entry => {
-                        const div = document.createElement('div');
-                        div.className = 'card';
-                        div.innerHTML = `
-                            <p class="font-bold text-lg mb-2">Progress on ${entry.Date}</p>
-                            <ul class="text-sm space-y-1">
-                                <li>Weight: ${entry['Weight (kg)']} kg</li>
-                                <li>Waist: ${entry['Waist (cm)']} cm</li>
-                                <li>Chest: ${entry['Chest (cm)']} cm</li>
-                                <li>Arms: ${entry['Arms (cm)']} cm</li>
-                                <li>Thighs: ${entry['Thighs (cm)']} cm</li>
-                                <li>Sleep: ${entry['Sleep (hours)']} hours</li>
-                                <li>Steps: ${entry.Steps}</li>
-                                <li>Cheat Meal: ${entry['Cheat Meal']}</li>
-                            </ul>
-                        `;
-                        progressList.appendChild(div);
-                    });
+                try {
+                    const response = await fetch(`${API_URL}?action=getProgressHistory`);
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        const progressList = document.getElementById('progress-list');
+                        progressList.innerHTML = '';
+                        progressHistory = data.history;
+                        progressHistory.forEach(entry => {
+                            const div = document.createElement('div');
+                            div.className = 'card';
+                            div.innerHTML = `
+                                <p class="font-bold text-lg mb-2">Progress on ${entry.Date}</p>
+                                <ul class="text-sm space-y-1">
+                                    <li>Weight: ${entry['Weight (kg)']} kg</li>
+                                    <li>Waist: ${entry['Waist (cm)']} cm</li>
+                                    <li>Chest: ${entry['Chest (cm)']} cm</li>
+                                    <li>Arms: ${entry['Arms (cm)']} cm</li>
+                                    <li>Thighs: ${entry['Thighs (cm)']} cm</li>
+                                    <li>Sleep: ${entry['Sleep (hours)']} hours</li>
+                                    <li>Steps: ${entry.Steps}</li>
+                                    <li>Cheat Meal: ${entry['Cheat Meal']}</li>
+                                </ul>
+                            `;
+                            progressList.appendChild(div);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error loading progress history:', error);
                 }
             }
 
@@ -787,18 +880,23 @@
                     cheatMeal: document.getElementById('cheat-meal').value
                 };
 
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'logProgress', data: progressData })
-                });
-                const data = await response.json();
-                if (data.status === 'success') {
-                    alert('Progress logged successfully!');
-                    progressForm.reset();
-                    loadProgressHistory();
-                    loadDashboardData();
-                } else {
-                    alert('Error logging progress: ' + data.message);
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'logProgress', data: progressData })
+                    });
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        showMessage('Progress logged successfully!');
+                        progressForm.reset();
+                        loadProgressHistory();
+                        loadDashboardData();
+                    } else {
+                        showMessage('Error logging progress: ' + data.message);
+                    }
+                } catch (error) {
+                    console.error('Error logging progress:', error);
+                    showMessage('Error logging progress. Please try again.');
                 }
             });
         });
