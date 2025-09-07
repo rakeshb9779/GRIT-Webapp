@@ -52,6 +52,7 @@
             background-color: #2D2D2D;
             border: 1px solid #444;
             color: #E0E0E0;
+            border-radius: 0.5rem;
         }
         .btn {
             padding: 0.75rem 1.5rem;
@@ -102,6 +103,9 @@
         .nav-item:hover {
             color: #4CAF50;
         }
+        .workout-card {
+            min-height: 400px;
+        }
     </style>
 </head>
 <body class="p-4 sm:p-8">
@@ -123,31 +127,55 @@
         </div>
 
         <!-- Content Area -->
-        <div id="workouts-content" class="content-tab">
+        <div id="dashboard-content" class="content-tab">
             <div class="card mb-6">
-                <h2 class="text-xl font-bold mb-4">My Weekly Workout Split</h2>
-                <div id="workout-schedule-container">
-                    <!-- Workout schedule for today will be loaded here -->
+                <h2 class="text-xl font-bold mb-4">Today's Overview</h2>
+                <div class="mb-4">
+                    <h3 class="font-semibold text-lg">Workout</h3>
+                    <div id="dashboard-workout" class="text-sm text-gray-400">Loading today's workout...</div>
+                </div>
+                <div class="mb-4">
+                    <h3 class="font-semibold text-lg">Macros</h3>
+                    <div id="dashboard-macros" class="text-sm text-gray-400">Loading daily macros...</div>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-lg">Progress</h3>
+                    <div id="dashboard-progress" class="text-sm text-gray-400">Loading recent progress...</div>
                 </div>
             </div>
-            <div class="card">
-                <h2 class="text-xl font-bold mb-4">Log Today's Workout</h2>
-                <select id="exercise-select" class="w-full p-2 mb-4 rounded-lg"></select>
-                <div id="previous-workout-info" class="mb-4 text-sm text-gray-400"></div>
-                <div id="set-entries-container">
-                    <!-- Set inputs will be added here -->
-                </div>
-                <div class="flex items-center space-x-2 mt-4">
-                    <button id="add-set-btn" class="btn btn-primary w-full">Add Set</button>
-                    <button id="log-workout-btn" class="btn btn-primary w-full">Log Workout</button>
-                </div>
-                <div id="timer-container" class="mt-4 text-center">
-                    <p class="text-gray-400">Rest Timer</p>
-                    <div id="timer-display" class="text-4xl font-bold my-2">00:00</div>
-                    <div class="flex justify-center space-x-4">
-                        <button id="start-timer-btn" class="btn bg-blue-500 text-white">Start</button>
-                        <button id="reset-timer-btn" class="btn bg-red-500 text-white">Reset</button>
+        </div>
+
+        <div id="workouts-content" class="content-tab hidden">
+            <div id="workout-start-page" class="card text-center min-h-60 flex flex-col justify-center items-center">
+                <h2 class="text-2xl font-bold mb-4">Time to GRIT!</h2>
+                <p class="text-gray-400 mb-6">Are you ready to start today's workout?</p>
+                <button id="start-workout-btn" class="btn btn-primary">Start Workout</button>
+            </div>
+            
+            <div id="workout-card-container" class="hidden">
+                <div class="card mb-4 workout-card">
+                    <h2 id="exercise-title" class="text-xl font-bold mb-2 text-center"></h2>
+                    <p id="previous-workout-info" class="mb-4 text-sm text-gray-400 text-center"></p>
+                    <div id="set-entries-container">
+                        <!-- Set inputs will be added here -->
                     </div>
+                    <div class="flex items-center space-x-2 mt-4">
+                        <button id="add-set-btn" class="btn btn-primary w-full">Add Set</button>
+                        <button id="log-set-btn" class="btn btn-primary w-full">Log Set</button>
+                    </div>
+                    <div id="timer-container" class="mt-6 text-center">
+                        <p class="text-gray-400">Rest Timer</p>
+                        <div id="timer-display" class="text-4xl font-bold my-2">00:00</div>
+                        <div class="flex justify-center space-x-4">
+                            <button id="start-timer-btn" class="btn bg-blue-500 text-white">Start</button>
+                            <button id="reset-timer-btn" class="btn bg-red-500 text-white">Reset</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between space-x-2">
+                    <button id="prev-exercise-btn" class="btn bg-gray-700 text-white w-full">Previous</button>
+                    <button id="next-exercise-btn" class="btn bg-gray-700 text-white w-full">Next</button>
                 </div>
             </div>
         </div>
@@ -229,7 +257,13 @@
 
     <!-- Footer Navigation Bar -->
     <div class="footer-nav flex justify-around items-center">
-        <a href="#" id="workouts-nav" class="nav-item active" data-tab="workouts-content">
+        <a href="#" id="dashboard-nav" class="nav-item active" data-tab="dashboard-content">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span class="text-xs">Dashboard</span>
+        </a>
+        <a href="#" id="workouts-nav" class="nav-item" data-tab="workouts-content">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -250,21 +284,32 @@
     </div>
 
     <script>
-        // Use the Google Apps Script API to communicate with the backend
         const API_URL = "<?!= ScriptApp.getService().getUrl(); ?>";
 
         document.addEventListener('DOMContentLoaded', () => {
             const navItems = document.querySelectorAll('.nav-item');
             const contents = document.querySelectorAll('.content-tab');
-            const exerciseSelect = document.getElementById('exercise-select');
+            const startWorkoutBtn = document.getElementById('start-workout-btn');
+            const workoutStartPage = document.getElementById('workout-start-page');
+            const workoutCardContainer = document.getElementById('workout-card-container');
+            const exerciseTitle = document.getElementById('exercise-title');
+            const previousWorkoutInfo = document.getElementById('previous-workout-info');
             const setEntriesContainer = document.getElementById('set-entries-container');
             const addSetBtn = document.getElementById('add-set-btn');
-            const logWorkoutBtn = document.getElementById('log-workout-btn');
-            const previousWorkoutInfo = document.getElementById('previous-workout-info');
-            
-            let weeklyExercises = []; // To store the workouts for the current week
+            const logSetBtn = document.getElementById('log-set-btn');
+            const prevExerciseBtn = document.getElementById('prev-exercise-btn');
+            const nextExerciseBtn = document.getElementById('next-exercise-btn');
+
+            let workoutSchedule = [];
+            let currentExerciseIndex = 0;
+            let dailyIntake = { protein: 0, carbs: 0, fats: 0, calories: 0 };
+            let macroTargets = { protein: 0, carbs: 0, fats: 0, calories: 0 };
+            let progressHistory = [];
             let timerInterval;
             let timerSeconds = 0;
+            const timerDisplay = document.getElementById('timer-display');
+            const startTimerBtn = document.getElementById('start-timer-btn');
+            const resetTimerBtn = document.getElementById('reset-timer-btn');
 
             // Function to show a specific tab
             function showTab(tabId) {
@@ -283,122 +328,130 @@
                 });
             });
 
-            // Initial view
-            showTab('workouts-content');
+            // Initial data loads
+            loadDashboardData();
+            loadDietData();
+            loadProgressHistory();
+            checkDay();
+            showTab('dashboard-content');
 
-            // --- Workouts Tab Logic ---
-
-            // Fetch workout schedule and populate the dropdown
-            async function loadWorkouts() {
+            // --- Dashboard Tab Logic ---
+            async function loadDashboardData() {
                 try {
-                    const response = await fetch(`${API_URL}?action=getWorkouts`);
-                    const data = await response.json();
-                    if (data.status === 'success') {
-                        weeklyExercises = data.workouts;
-                        const scheduleContainer = document.getElementById('workout-schedule-container');
-                        scheduleContainer.innerHTML = '';
-                        exerciseSelect.innerHTML = '<option value="">Select an Exercise</option>';
+                    const [workoutResponse, dietResponse, progressResponse] = await Promise.all([
+                        fetch(`${API_URL}?action=getWorkouts`),
+                        fetch(`${API_URL}?action=getDietData`),
+                        fetch(`${API_URL}?action=getProgressHistory`)
+                    ]);
+                    const workoutData = await workoutResponse.json();
+                    const dietData = await dietResponse.json();
+                    const progressData = await progressResponse.json();
 
-                        // Get today's workout
+                    if (workoutData.status === 'success') {
                         const today = new Date();
                         const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                         const todayName = daysOfWeek[today.getDay()];
-                        const todayWorkout = weeklyExercises.find(dayData => dayData.Day === todayName);
-
-                        if (todayWorkout) {
-                            const dayCard = document.createElement('div');
-                            dayCard.className = 'card';
-                            dayCard.innerHTML = `
-                                <h3 class="font-bold text-lg mb-2">${todayWorkout.Day}</h3>
-                                <p class="text-sm text-gray-400 mb-2">${todayWorkout.Note}</p>
-                                <ul class="list-disc list-inside space-y-1">
-                                    ${todayWorkout.Exercises.map(ex => `<li>${ex}</li>`).join('')}
-                                </ul>
-                            `;
-                            scheduleContainer.appendChild(dayCard);
-                            todayWorkout.Exercises.forEach(ex => {
-                                const option = document.createElement('option');
-                                option.value = ex;
-                                option.textContent = ex;
-                                exerciseSelect.appendChild(option);
-                            });
-                        } else {
-                             scheduleContainer.innerHTML = `<p class="text-center text-gray-400">No workout planned for today. Please check your schedule.</p>`;
-                        }
+                        const todayWorkout = workoutData.workouts.find(dayData => dayData.Day === todayName);
+                        const workoutText = todayWorkout ? todayWorkout.Exercises.join(', ') : 'No workout planned.';
+                        document.getElementById('dashboard-workout').textContent = workoutText;
+                        workoutSchedule = todayWorkout ? todayWorkout.Exercises : [];
                     }
+
+                    if (dietData.status === 'success') {
+                        const macros = dietData.dailyIntake;
+                        const macrosText = `Protein: ${macros.protein.toFixed(1)}g, Carbs: ${macros.carbs.toFixed(1)}g, Fats: ${macros.fats.toFixed(1)}g`;
+                        document.getElementById('dashboard-macros').textContent = macrosText;
+                        dailyIntake = macros;
+                        macroTargets = dietData.macroTargets;
+                    }
+
+                    if (progressData.status === 'success' && progressData.history.length > 0) {
+                        const latestProgress = progressData.history[0];
+                        const progressText = `Last Weight: ${latestProgress['Weight (kg)']}kg, Waist: ${latestProgress['Waist (cm)']}cm`;
+                        document.getElementById('dashboard-progress').textContent = progressText;
+                        progressHistory = progressData.history;
+                    }
+
                 } catch (error) {
-                    console.error('Error loading workouts:', error);
+                    console.error('Error loading dashboard data:', error);
                 }
             }
 
-            // Function to add a set input field
-            function addSetInput(setNumber = 1, reps = '', weight = '') {
-                const setDiv = document.createElement('div');
-                setDiv.className = 'flex items-center space-x-2 mt-2';
-                setDiv.innerHTML = `
-                    <span class="font-bold">Set ${setNumber}:</span>
-                    <input type="number" placeholder="Reps" value="${reps}" class="w-1/2 p-2 rounded-lg set-reps">
-                    <input type="number" placeholder="Weight (kg)" value="${weight}" class="w-1/2 p-2 rounded-lg set-weight">
-                `;
-                setEntriesContainer.appendChild(setDiv);
-            }
+            // --- Workouts Tab Logic ---
 
-            // Fetch previous workout data when an exercise is selected
-            exerciseSelect.addEventListener('change', async () => {
+            startWorkoutBtn.addEventListener('click', () => {
+                if (workoutSchedule.length === 0) {
+                    alert("No workout planned for today. Please check your schedule.");
+                    return;
+                }
+                workoutStartPage.classList.add('hidden');
+                workoutCardContainer.classList.remove('hidden');
+                currentExerciseIndex = 0;
+                loadExerciseCard(currentExerciseIndex);
+            });
+
+            async function loadExerciseCard(index) {
+                const exerciseName = workoutSchedule[index];
+                if (!exerciseName) {
+                    alert("Workout complete! Great job!");
+                    workoutStartPage.classList.remove('hidden');
+                    workoutCardContainer.classList.add('hidden');
+                    return;
+                }
+                
+                exerciseTitle.textContent = exerciseName;
                 setEntriesContainer.innerHTML = '';
-                const exerciseName = exerciseSelect.value;
-                if (!exerciseName) return;
-
+                addSetInput(1);
+                
                 const response = await fetch(`${API_URL}?action=getPreviousWorkout&exercise=${encodeURIComponent(exerciseName)}`);
                 const data = await response.json();
                 
                 previousWorkoutInfo.innerHTML = '';
                 if (data.status === 'success' && data.previousWorkout && data.previousWorkout.length > 0) {
                     const lastSet = data.previousWorkout[data.previousWorkout.length - 1];
-                    let motivationalMessage = `You're doing great! Last week you did ${lastSet.Reps} reps at ${lastSet['Weight (kg)']}kg. Let's aim to beat that today!`;
-                    previousWorkoutInfo.textContent = motivationalMessage;
+                    const repsLast = parseInt(lastSet.Reps);
+                    const weightLast = parseFloat(lastSet['Weight (kg)']);
+                    const firstSet = data.previousWorkout[0];
+                    let message = `Last week you did ${lastSet.Reps} reps at ${lastSet['Weight (kg)']}kg. Let's aim to beat that today!`;
+                    previousWorkoutInfo.textContent = message;
                 } else {
                     previousWorkoutInfo.textContent = 'No previous workout data found. Time to set a baseline!';
                 }
+            }
+            
+            function addSetInput(setNumber = 1) {
+                const setDiv = document.createElement('div');
+                setDiv.className = 'flex items-center space-x-2 mt-2';
+                setDiv.innerHTML = `
+                    <span class="font-bold">Set ${setNumber}:</span>
+                    <input type="number" placeholder="Reps" class="w-1/2 p-2 rounded-lg set-reps">
+                    <input type="number" placeholder="Weight (kg)" class="w-1/2 p-2 rounded-lg set-weight">
+                `;
+                setEntriesContainer.appendChild(setDiv);
+            }
 
-                // Add blank input fields for a new workout
-                addSetInput(1);
-            });
-
-            // Add set button
             addSetBtn.addEventListener('click', () => {
                 const currentSets = setEntriesContainer.querySelectorAll('.set-reps').length;
                 addSetInput(currentSets + 1);
             });
 
-            // Log workout button
-            logWorkoutBtn.addEventListener('click', async () => {
-                const exerciseName = exerciseSelect.value;
-                if (!exerciseName) {
-                    alert('Please select an exercise.');
+            logSetBtn.addEventListener('click', async () => {
+                const exerciseName = workoutSchedule[currentExerciseIndex];
+                const reps = setEntriesContainer.querySelector('.set-reps').value;
+                const weight = setEntriesContainer.querySelector('.set-weight').value;
+                
+                if (!reps || !weight) {
+                    alert('Please enter reps and weight.');
                     return;
                 }
-
-                const sets = [];
-                const setElements = setEntriesContainer.querySelectorAll('.flex.items-center.space-x-2');
-                setElements.forEach((el, index) => {
-                    const reps = el.querySelector('.set-reps').value;
-                    const weight = el.querySelector('.set-weight').value;
-                    if (reps && weight) {
-                        sets.push({
-                            date: new Date().toISOString().slice(0, 10),
-                            exercise: exerciseName,
-                            setNumber: index + 1,
-                            reps: parseInt(reps),
-                            weight: parseFloat(weight)
-                        });
-                    }
-                });
-
-                if (sets.length === 0) {
-                    alert('Please enter at least one set.');
-                    return;
-                }
+                
+                const sets = [{
+                    date: new Date().toISOString().slice(0, 10),
+                    exercise: exerciseName,
+                    setNumber: setEntriesContainer.querySelectorAll('.set-reps').length,
+                    reps: parseInt(reps),
+                    weight: parseFloat(weight)
+                }];
 
                 const response = await fetch(API_URL, {
                     method: 'POST',
@@ -406,19 +459,35 @@
                 });
                 const data = await response.json();
                 if (data.status === 'success') {
-                    alert('Workout logged successfully!');
+                    alert('Set logged successfully!');
                     setEntriesContainer.innerHTML = '';
-                    exerciseSelect.value = '';
+                    addSetInput(1);
+                    resetTimer();
                 } else {
-                    alert('Error logging workout: ' + data.message);
+                    alert('Error logging set: ' + data.message);
+                }
+            });
+
+            prevExerciseBtn.addEventListener('click', () => {
+                if (currentExerciseIndex > 0) {
+                    currentExerciseIndex--;
+                    loadExerciseCard(currentExerciseIndex);
+                }
+            });
+
+            nextExerciseBtn.addEventListener('click', () => {
+                if (currentExerciseIndex < workoutSchedule.length - 1) {
+                    currentExerciseIndex++;
+                    loadExerciseCard(currentExerciseIndex);
+                } else {
+                    alert("Workout complete! You've done all the exercises for today.");
+                    showTab('dashboard-content');
+                    workoutStartPage.classList.remove('hidden');
+                    workoutCardContainer.classList.add('hidden');
                 }
             });
 
             // --- Workout Timer Logic ---
-            const timerDisplay = document.getElementById('timer-display');
-            const startTimerBtn = document.getElementById('start-timer-btn');
-            const resetTimerBtn = document.getElementById('reset-timer-btn');
-
             function startTimer() {
                 if (timerInterval) return;
                 timerInterval = setInterval(() => {
@@ -441,8 +510,6 @@
             
             // --- Diet Tab Logic ---
             const mealForm = document.getElementById('meal-form');
-            let dailyIntake = { protein: 0, carbs: 0, fats: 0, calories: 0 };
-            let macroTargets = { protein: 0, carbs: 0, fats: 0, calories: 0 };
 
             async function loadDietData() {
                 try {
@@ -459,7 +526,7 @@
             }
 
             function updateMacroDisplay() {
-                const targets = macroTargets.calories ? macroTargets : { protein: 180, carbs: 250, fats: 70 }; // Fallback targets
+                const targets = macroTargets.calories ? macroTargets : { protein: 180, carbs: 250, fats: 70 };
                 document.getElementById('macro-targets-container').innerHTML = `
                     <p class="text-sm text-gray-400">Target Macros: ${targets.protein}g Protein, ${targets.carbs}g Carbs, ${targets.fats}g Fats</p>
                 `;
@@ -499,6 +566,7 @@
                     alert('Meal logged successfully!');
                     mealForm.reset();
                     loadDietData();
+                    loadDashboardData();
                 } else {
                     alert('Error logging meal: ' + data.message);
                 }
@@ -525,7 +593,8 @@
                 if (data.status === 'success') {
                     const progressList = document.getElementById('progress-list');
                     progressList.innerHTML = '';
-                    data.history.forEach(entry => {
+                    progressHistory = data.history;
+                    progressHistory.forEach(entry => {
                         const div = document.createElement('div');
                         div.className = 'card';
                         div.innerHTML = `
@@ -569,16 +638,11 @@
                     alert('Progress logged successfully!');
                     progressForm.reset();
                     loadProgressHistory();
+                    loadDashboardData();
                 } else {
                     alert('Error logging progress: ' + data.message);
                 }
             });
-
-            // Initial data loads
-            loadWorkouts();
-            loadDietData();
-            loadProgressHistory();
-            checkDay();
         });
     </script>
 </body>
