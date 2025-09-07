@@ -106,6 +106,22 @@
         .workout-card {
             min-height: 400px;
         }
+        .exercise-item {
+            border: 1px solid #333;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .exercise-item:hover {
+            background-color: #2D2D2D;
+        }
+        .history-container {
+            border-left: 2px solid #4CAF50;
+            padding-left: 1rem;
+            margin-top: 1rem;
+        }
     </style>
 </head>
 <body class="p-4 sm:p-8">
@@ -146,36 +162,51 @@
         </div>
 
         <div id="workouts-content" class="content-tab hidden">
-            <div id="workout-start-page" class="card text-center min-h-60 flex flex-col justify-center items-center">
-                <h2 class="text-2xl font-bold mb-4">Time to GRIT!</h2>
-                <p class="text-gray-400 mb-6">Are you ready to start today's workout?</p>
-                <button id="start-workout-btn" class="btn btn-primary">Start Workout</button>
+            <div class="flex justify-between space-x-2 mb-4">
+                <button id="flashcard-view-btn" class="btn bg-gray-700 text-white w-full">Flash Card View</button>
+                <button id="list-view-btn" class="btn bg-gray-700 text-white w-full">List View</button>
             </div>
-            
-            <div id="workout-card-container" class="hidden">
-                <div class="card mb-4 workout-card">
-                    <h2 id="exercise-title" class="text-xl font-bold mb-2 text-center"></h2>
-                    <p id="previous-workout-info" class="mb-4 text-sm text-gray-400 text-center"></p>
-                    <div id="set-entries-container">
-                        <!-- Set inputs will be added here -->
-                    </div>
-                    <div class="flex items-center space-x-2 mt-4">
-                        <button id="add-set-btn" class="btn btn-primary w-full">Add Set</button>
-                        <button id="log-set-btn" class="btn btn-primary w-full">Log Set</button>
-                    </div>
-                    <div id="timer-container" class="mt-6 text-center">
-                        <p class="text-gray-400">Rest Timer</p>
-                        <div id="timer-display" class="text-4xl font-bold my-2">00:00</div>
-                        <div class="flex justify-center space-x-4">
-                            <button id="start-timer-btn" class="btn bg-blue-500 text-white">Start</button>
-                            <button id="reset-timer-btn" class="btn bg-red-500 text-white">Reset</button>
-                        </div>
-                    </div>
+
+            <!-- Flash Card View -->
+            <div id="flashcard-view" class="view-content">
+                <div id="workout-start-page" class="card text-center min-h-60 flex flex-col justify-center items-center">
+                    <h2 class="text-2xl font-bold mb-4">Time to GRIT!</h2>
+                    <p class="text-gray-400 mb-6">Are you ready to start today's workout?</p>
+                    <button id="start-workout-btn" class="btn btn-primary">Start Workout</button>
                 </div>
                 
-                <div class="flex justify-between space-x-2">
-                    <button id="prev-exercise-btn" class="btn bg-gray-700 text-white w-full">Previous</button>
-                    <button id="next-exercise-btn" class="btn bg-gray-700 text-white w-full">Next</button>
+                <div id="workout-card-container" class="hidden">
+                    <div class="card mb-4 workout-card">
+                        <h2 id="exercise-title" class="text-xl font-bold mb-2 text-center"></h2>
+                        <p id="previous-workout-info" class="mb-4 text-sm text-gray-400 text-center"></p>
+                        <div id="set-entries-container">
+                            <!-- Set inputs will be added here -->
+                        </div>
+                        <div class="flex items-center space-x-2 mt-4">
+                            <button id="add-set-btn" class="btn btn-primary w-full">Add Set</button>
+                            <button id="log-set-btn" class="btn btn-primary w-full">Log Set</button>
+                        </div>
+                        <div id="timer-container" class="mt-6 text-center">
+                            <p class="text-gray-400">Rest Timer</p>
+                            <div id="timer-display" class="text-4xl font-bold my-2">00:00</div>
+                            <div class="flex justify-center space-x-4">
+                                <button id="start-timer-btn" class="btn bg-blue-500 text-white">Start</button>
+                                <button id="reset-timer-btn" class="btn bg-red-500 text-white">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between space-x-2">
+                        <button id="prev-exercise-btn" class="btn bg-gray-700 text-white w-full">Previous</button>
+                        <button id="next-exercise-btn" class="btn bg-gray-700 text-white w-full">Next</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List View -->
+            <div id="list-view" class="view-content hidden">
+                <div id="workout-list-container" class="space-y-4">
+                    <!-- Exercises will be listed here -->
                 </div>
             </div>
         </div>
@@ -289,6 +320,11 @@
         document.addEventListener('DOMContentLoaded', () => {
             const navItems = document.querySelectorAll('.nav-item');
             const contents = document.querySelectorAll('.content-tab');
+            const flashcardViewBtn = document.getElementById('flashcard-view-btn');
+            const listViewBtn = document.getElementById('list-view-btn');
+            const flashcardView = document.getElementById('flashcard-view');
+            const listView = document.getElementById('list-view');
+
             const startWorkoutBtn = document.getElementById('start-workout-btn');
             const workoutStartPage = document.getElementById('workout-start-page');
             const workoutCardContainer = document.getElementById('workout-card-container');
@@ -318,6 +354,17 @@
                 document.getElementById(tabId).classList.remove('hidden');
                 document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
             }
+            
+            // Function to switch between workout views
+            function showWorkoutView(viewId) {
+                flashcardView.classList.add('hidden');
+                listView.classList.add('hidden');
+                flashcardViewBtn.classList.remove('bg-gray-500');
+                listViewBtn.classList.remove('bg-gray-500');
+
+                document.getElementById(viewId).classList.remove('hidden');
+                document.getElementById(viewId + '-btn').classList.add('bg-gray-500');
+            }
 
             // Navigation click listeners
             navItems.forEach(nav => {
@@ -328,12 +375,17 @@
                 });
             });
 
+            // Workout view button listeners
+            flashcardViewBtn.addEventListener('click', () => showWorkoutView('flashcard-view'));
+            listViewBtn.addEventListener('click', () => showWorkoutView('list-view'));
+
             // Initial data loads
             loadDashboardData();
             loadDietData();
             loadProgressHistory();
             checkDay();
             showTab('dashboard-content');
+            showWorkoutView('flashcard-view');
 
             // --- Dashboard Tab Logic ---
             async function loadDashboardData() {
@@ -355,6 +407,9 @@
                         const workoutText = todayWorkout ? todayWorkout.Exercises.join(', ') : 'No workout planned.';
                         document.getElementById('dashboard-workout').textContent = workoutText;
                         workoutSchedule = todayWorkout ? todayWorkout.Exercises : [];
+                        if (workoutSchedule.length > 0) {
+                            renderListView();
+                        }
                     }
 
                     if (dietData.status === 'success') {
@@ -379,6 +434,7 @@
 
             // --- Workouts Tab Logic ---
 
+            // Flash Card View
             startWorkoutBtn.addEventListener('click', () => {
                 if (workoutSchedule.length === 0) {
                     alert("No workout planned for today. Please check your schedule.");
@@ -411,8 +467,7 @@
                     const lastSet = data.previousWorkout[data.previousWorkout.length - 1];
                     const repsLast = parseInt(lastSet.Reps);
                     const weightLast = parseFloat(lastSet['Weight (kg)']);
-                    const firstSet = data.previousWorkout[0];
-                    let message = `Last week you did ${lastSet.Reps} reps at ${lastSet['Weight (kg)']}kg. Let's aim to beat that today!`;
+                    let message = `Last week you did ${repsLast} reps at ${weightLast}kg. Let's aim to beat that today!`;
                     previousWorkoutInfo.textContent = message;
                 } else {
                     previousWorkoutInfo.textContent = 'No previous workout data found. Time to set a baseline!';
@@ -486,6 +541,109 @@
                     workoutCardContainer.classList.add('hidden');
                 }
             });
+
+            // List View
+            async function renderListView() {
+                const listContainer = document.getElementById('workout-list-container');
+                listContainer.innerHTML = '';
+                const completedExercises = {};
+
+                // Get completed exercises for today
+                const workoutLogResponse = await fetch(`${API_URL}?action=getWorkoutLogByDate&date=${new Date().toISOString().slice(0, 10)}`);
+                const workoutLogData = await workoutLogResponse.json();
+                if (workoutLogData.status === 'success') {
+                    workoutLogData.logs.forEach(log => {
+                        if (!completedExercises[log.Exercise]) {
+                            completedExercises[log.Exercise] = [];
+                        }
+                        completedExercises[log.Exercise].push(log);
+                    });
+                }
+
+                workoutSchedule.forEach(async exercise => {
+                    const exerciseItem = document.createElement('div');
+                    exerciseItem.className = 'exercise-item card';
+                    
+                    const isCompleted = completedExercises[exercise] && completedExercises[exercise].length > 0;
+                    exerciseItem.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-lg">${exercise}</h3>
+                            ${isCompleted ? '<span class="text-green-500">✓ Done</span>' : '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400 transform transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>'}
+                        </div>
+                        <div class="content mt-4 hidden">
+                            <p class="font-semibold mb-2">Log a new set:</p>
+                            <div class="flex space-x-2">
+                                <input type="number" class="w-1/2 p-2 set-reps" placeholder="Reps">
+                                <input type="number" class="w-1/2 p-2 set-weight" placeholder="Weight (kg)">
+                                <button class="btn btn-primary log-list-set-btn" data-exercise="${exercise}">Log</button>
+                            </div>
+                            <div class="history-container mt-4">
+                                <h4 class="font-semibold mb-2">Previous 3 Weeks:</h4>
+                                <div class="history-content text-sm text-gray-400">Loading history...</div>
+                            </div>
+                        </div>
+                    `;
+                    listContainer.appendChild(exerciseItem);
+
+                    // Fetch and display history
+                    if (!isCompleted) {
+                         const historyContent = exerciseItem.querySelector('.history-content');
+                         const response = await fetch(`${API_URL}?action=getPreviousWorkout&exercise=${encodeURIComponent(exercise)}`);
+                         const data = await response.json();
+                         if (data.status === 'success' && data.previousWorkout.length > 0) {
+                             const historyHtml = data.previousWorkout.map(log => `
+                                 <p><strong>${log.Date}:</strong> Set ${log['Set #']} - ${log.Reps} reps @ ${log['Weight (kg)']}kg</p>
+                             `).join('');
+                             historyContent.innerHTML = historyHtml;
+                         } else {
+                             historyContent.textContent = "No history found for this exercise.";
+                         }
+                     }
+
+                    // Handle expand/collapse and log set
+                    exerciseItem.addEventListener('click', (e) => {
+                        const content = exerciseItem.querySelector('.content');
+                        content.classList.toggle('hidden');
+                        const arrow = exerciseItem.querySelector('svg');
+                        if (arrow) {
+                            arrow.classList.toggle('rotate-180');
+                        }
+                    });
+
+                    exerciseItem.querySelector('.log-list-set-btn').addEventListener('click', async (e) => {
+                        e.stopPropagation(); // Prevent the parent from toggling the card
+                        const reps = exerciseItem.querySelector('.set-reps').value;
+                        const weight = exerciseItem.querySelector('.set-weight').value;
+                        const exerciseToLog = e.target.getAttribute('data-exercise');
+                        
+                        if (!reps || !weight) {
+                            alert('Please enter reps and weight.');
+                            return;
+                        }
+
+                        const sets = [{
+                            date: new Date().toISOString().slice(0, 10),
+                            exercise: exerciseToLog,
+                            setNumber: completedExercises[exerciseToLog] ? completedExercises[exerciseToLog].length + 1 : 1,
+                            reps: parseInt(reps),
+                            weight: parseFloat(weight)
+                        }];
+
+                        const logResponse = await fetch(API_URL, {
+                            method: 'POST',
+                            body: JSON.stringify({ action: 'logWorkout', data: sets })
+                        });
+                        const logData = await logResponse.json();
+                        if (logData.status === 'success') {
+                            alert('Set logged successfully!');
+                            renderListView(); // Re-render the list to show the new log
+                        } else {
+                            alert('Error logging set: ' + logData.message);
+                        }
+                    });
+                });
+            }
+
 
             // --- Workout Timer Logic ---
             function startTimer() {
