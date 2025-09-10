@@ -371,7 +371,7 @@
                     skipEmptyLines: true,
                     complete: (results) => {
                         const allWorkouts = results.data;
-                        const todaysWorkouts = allWorkouts.filter(w => w.DAY && w.DAY.toLowerCase() === todayName.toLowerCase());
+                        const todaysWorkouts = allWorkouts.filter(w => w.DAY && w.DAY.toLowerCase().includes(todayName.toLowerCase()));
 
                         if (todaysWorkouts.length === 0) {
                             container.innerHTML = `<div class="glass-card p-6 text-center">
