@@ -8,7 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         :root {
             --primary-rgb: 56 189 248;
@@ -28,12 +27,12 @@
             --input-border-dark: rgba(var(--primary-rgb), 0.4);
             --text-muted-dark: #94a3b8;
         }
-
+        
         html, body {
             height: 100%;
             touch-action: pan-y;
         }
-
+        
         body {
             font-family: 'Inter', sans-serif;
             transition: background-color 0.5s ease, color 0.5s ease;
@@ -44,24 +43,24 @@
             user-select: none;
             overscroll-behavior: contain;
         }
-
+        
         body.light-theme {
             background-color: rgb(var(--bg-light));
             color: rgb(var(--text-light));
         }
-
+        
         body.dark-theme {
             background-color: var(--bg-dark);
             color: var(--text-dark);
         }
-
+        
         .main-container {
-            min-height: calc(100vh - 80px); /* Adjust for footer height */
+            min-height: calc(100vh - 80px);
             padding: 1rem;
             padding-bottom: 5rem;
             box-sizing: border-box;
         }
-
+        
         .glass-card {
             border-radius: 20px;
             padding: 1rem;
@@ -79,7 +78,7 @@
             background-color: var(--card-bg-dark);
             border-color: var(--card-border-dark);
         }
-
+        
         .futuristic-input, .futuristic-select {
             border: 2px solid;
             border-radius: 12px;
@@ -113,18 +112,18 @@
             height: 70px;
             display: flex;
             align-items: center;
-            justify-content: flex-start; /* Align to the left to enable scrolling */
+            justify-content: flex-start;
             padding: 0 1rem;
             box-sizing: border-box;
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             transition: background-color 0.5s ease, border-top 0.5s ease;
             z-index: 50;
-            overflow-x: scroll; /* Enable horizontal scrolling */
+            overflow-x: scroll;
             -webkit-overflow-scrolling: touch;
         }
         .footer-navbar::-webkit-scrollbar {
-            display: none; /* Hide scrollbar for a cleaner look */
+            display: none;
         }
         body.light-theme .footer-navbar {
             background-color: var(--card-bg-light);
@@ -134,7 +133,7 @@
             background-color: var(--card-bg-dark);
             border-top: 1px solid var(--card-border-dark);
         }
-
+        
         .nav-item {
             flex-shrink: 0;
             display: flex;
@@ -156,13 +155,39 @@
         .nav-item.active {
             color: rgb(var(--primary-rgb));
         }
-
+        
         /* Hide all pages initially */
         .page {
             display: none;
         }
         .page.active {
             display: block;
+        }
+        
+        .futuristic-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+        .futuristic-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        
+        .fade-in-up {
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
@@ -176,7 +201,7 @@
                 <p class="text-muted">Coming Soon!</p>
             </div>
         </div>
-
+        
         <!-- Workout Page -->
         <div id="workout-page" class="page active">
             <div class="flex justify-between items-center mb-4">
@@ -193,7 +218,7 @@
                 </div>
             </div>
         </div>
-
+        
         <!-- Diet Page -->
         <div id="diet-page" class="page">
             <h1 class="text-3xl font-bold mb-4">Diet Tracker</h1>
@@ -201,7 +226,7 @@
                 <p class="text-muted">Coming Soon!</p>
             </div>
         </div>
-
+        
         <!-- Progress Page -->
         <div id="progress-page" class="page">
             <h1 class="text-3xl font-bold mb-4">My Progress</h1>
@@ -209,7 +234,7 @@
                 <p class="text-muted">Coming Soon!</p>
             </div>
         </div>
-
+        
         <!-- Settings Page -->
         <div id="settings-page" class="page">
             <h1 class="text-3xl font-bold mb-4">Settings</h1>
@@ -217,9 +242,9 @@
                 <p class="text-muted">Coming Soon!</p>
             </div>
         </div>
-
+        
     </div>
-
+    
     <!-- Footer Navbar -->
     <div class="footer-navbar">
         <a href="#dashboard" class="nav-item">
@@ -243,19 +268,22 @@
             <span>Settings</span>
         </a>
     </div>
-
+    
     <script>
         // Initialize Lucide icons
         lucide.createIcons();
-
-        // --- GLOBAL CONFIGS & URLs ---
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBvh6uogeuSdKEjaodMCbKpSA7qUqSY7d-XAZ_6y_L_C5eVZCWNegZQ54g4zv7ZSq0/exec';
-        const PROXY_POST_URL = '/.netlify/functions/proxy'; // Assumes a Netlify Functions proxy
         
-        // Use the new Apps Script URL to get all workout data directly
+        // --- GLOBAL CONFIGS & URLs ---
+        // REPLACE THIS URL with your deployed Apps Script URL
+        const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
+        
+        // This is a proxy URL for handling POST requests to Apps Script due to CORS restrictions.
+        // It assumes a Netlify Functions proxy or a similar serverless function setup.
+        const PROXY_POST_URL = '/.netlify/functions/proxy';
+        
         const WORKOUT_PLAN_API = `${APPS_SCRIPT_URL}?action=getAllWorkouts`;
         const WORKOUT_LOG_API = `${APPS_SCRIPT_URL}?action=getHistoricalWorkoutData`;
-
+        
         // --- THEME TOGGLE ---
         const themeToggle = document.getElementById('theme-toggle');
         const setTheme = (isDark) => {
@@ -266,7 +294,7 @@
         };
         themeToggle.onclick = () => setTheme(!document.body.classList.contains('dark-theme'));
         setTheme(localStorage.getItem('gritTheme') !== 'light');
-
+        
         // --- NAVIGATION LOGIC ---
         const navLinks = document.querySelectorAll('.nav-item');
         const pages = document.querySelectorAll('.page');
@@ -277,7 +305,7 @@
             'progress': 'progress-page',
             'settings': 'settings-page'
         };
-
+        
         function showPage(pageId) {
             pages.forEach(page => page.classList.remove('active'));
             document.getElementById(pageMap[pageId]).classList.add('active');
@@ -288,27 +316,27 @@
                 }
             });
             window.location.hash = pageId;
+            if (pageId === 'workout') {
+                fetchTodaysWorkouts();
+            }
         }
-
+        
         navLinks.forEach(link => link.addEventListener('click', (e) => {
             e.preventDefault();
             const pageId = link.getAttribute('href').substring(1);
             showPage(pageId);
         }));
-
+        
         window.addEventListener('hashchange', () => {
             const pageId = window.location.hash.substring(1) || 'workout';
             showPage(pageId);
         });
-
+        
         window.onload = () => {
             const pageId = window.location.hash.substring(1) || 'workout';
             showPage(pageId);
-            if (pageId === 'workout') {
-                fetchTodaysWorkouts();
-            }
         };
-
+        
         // --- UTILITY FUNCTIONS ---
         function showToast(title, icon = 'success') {
             const isDark = document.body.classList.contains('dark-theme');
@@ -320,6 +348,7 @@
         }
         
         // Function to handle GET requests using JSONP
+        // This is necessary because Apps Script web apps do not support direct CORS GET requests.
         function fetchJSONP(url) {
             return new Promise((resolve, reject) => {
                 const callbackName = '__jsonp_cb_' + Date.now() + Math.random().toString(36).substring(2);
@@ -342,6 +371,7 @@
         }
         
         // Function to handle POST requests using a proxy
+        // This is necessary because Apps Script web apps do not support direct CORS POST requests.
         function postData(payload) {
             return fetch(PROXY_POST_URL, {
                 method: 'POST',
@@ -349,7 +379,7 @@
                 body: JSON.stringify({ appsScriptUrl: APPS_SCRIPT_URL, data: payload })
             }).then(r => r.json());
         }
-
+        
         // --- WORKOUT LOGIC ---
         async function fetchTodaysWorkouts() {
             const container = document.getElementById('workouts-container');
@@ -371,10 +401,9 @@
                     throw new Error(response.message || 'Failed to fetch workouts data.');
                 }
                 const allWorkouts = response.data;
-                console.log("Raw Workouts Data:", allWorkouts);
                 
                 const todaysWorkouts = allWorkouts.filter(w => w.DAY && String(w.DAY).trim().toLowerCase().includes(todayName.toLowerCase()));
-
+                
                 if (todaysWorkouts.length === 0) {
                     container.innerHTML = `<div class="glass-card p-6 text-center">
                         <i data-lucide="check-circle" class="text-green-400 mx-auto w-8 h-8"></i>
@@ -384,21 +413,20 @@
                     lucide.createIcons();
                     return;
                 }
-
+                
                 container.innerHTML = '';
-                todaysWorkouts.forEach(workout => {
-                    renderWorkoutCard(workout);
-                });
+                for (const workout of todaysWorkouts) {
+                    await renderWorkoutCard(workout);
+                }
                 
                 lucide.createIcons();
-
             } catch (error) {
                 console.error("Fetch Error:", error);
                 showToast("Failed to fetch workouts data.", "error");
                 container.innerHTML = `<div class="glass-card p-6 text-center"><p class="text-red-400">Error loading workouts. Please check your network connection or Apps Script deployment.</p></div>`;
             }
         }
-
+        
         async function renderWorkoutCard(workout) {
             const container = document.getElementById('workouts-container');
             
@@ -409,7 +437,7 @@
                 
                 // Fetch historical data for this specific exercise
                 const historicalData = await getHistoricalWorkoutData(exerciseName);
-
+                
                 const cardHtml = `
                     <div class="glass-card p-4 fade-in-up" data-workout="${exerciseName}">
                         <h2 class="text-xl font-bold mb-2">${exerciseName}</h2>
@@ -424,7 +452,7 @@
                                 </div>
                             `).join('') : '<p class="text-muted text-xs">No previous data found. Let\'s get started!</p>'}
                         </div>
-
+                        
                         <form class="workout-form space-y-3" onsubmit="handleWorkoutSubmit(event, '${exerciseName}')">
                             <div>
                                 <label class="block text-sm text-muted mb-1">Sets</label>
@@ -454,7 +482,7 @@
             }
             lucide.createIcons();
         }
-
+        
         async function getHistoricalWorkoutData(workoutName) {
             try {
                 // Fetch the last 3 logged workouts for this specific exercise
@@ -470,7 +498,7 @@
                 return [];
             }
         }
-
+        
         async function handleWorkoutSubmit(event, workoutName) {
             event.preventDefault();
             const form = event.target;
@@ -484,7 +512,7 @@
             showToast('Saving workout...', 'info');
             const submitButton = form.querySelector('button[type="submit"]');
             submitButton.disabled = true;
-
+            
             try {
                 const response = await postData({ action: 'logWorkout', data: workoutData });
                 if (response.status === 'success') {
