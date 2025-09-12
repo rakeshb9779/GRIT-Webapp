@@ -164,6 +164,12 @@
                                 <p class="text-gray-500">No recent history found.</p>
                             </div>
                         </div>
+                        
+                        <div id="recommendation-section" class="text-center mb-6 hidden">
+                            <div class="inline-block px-4 py-2 bg-blue-500/20 text-blue-300 rounded-full font-semibold text-sm">
+                                Recommended: <span id="rec-weight"></span>kg for <span id="rec-reps"></span> reps
+                            </div>
+                        </div>
 
                         <div id="log-form-container" class="space-y-4">
                             <div class="flex items-center space-x-4">
@@ -211,7 +217,30 @@
                 </div>
             </div>
         </div>
-
+        
+        <div id="diet-page" class="page-content hidden">
+            <div class="glass-card p-8 fade-in">
+                <h2 class="text-3xl font-extrabold mb-6 text-center">Diet Log</h2>
+                <form id="diet-form" class="space-y-4">
+                    <div>
+                        <label for="meal-input" class="block text-gray-400 font-semibold mb-2">Meal</label>
+                        <input type="text" id="meal-input" class="w-full bg-slate-800 text-gray-200 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Chicken breast, rice">
+                    </div>
+                    <div>
+                        <label for="calories-input" class="block text-gray-400 font-semibold mb-2">Calories</label>
+                        <input type="number" id="calories-input" class="w-full bg-slate-800 text-gray-200 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 500">
+                    </div>
+                    <button type="submit" class="futuristic-btn w-full">Log Meal</button>
+                </form>
+                <div class="mt-8">
+                    <h3 class="text-xl font-bold mb-4">Recent Meals</h3>
+                    <div id="meal-history" class="space-y-2 text-gray-400">
+                        <p>No meals logged today.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <div id="progress-page" class="page-content hidden">
             <div class="glass-card p-8 text-center fade-in">
                 <h2 class="text-3xl font-extrabold mb-6">Your Progress</h2>
@@ -228,13 +257,14 @@
                         <label for="rest-timer-setting" class="block text-gray-400 font-semibold mb-2">Rest Timer Duration (seconds)</label>
                         <input type="number" id="rest-timer-setting" class="w-full bg-slate-800 text-gray-200 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="60" min="30" max="300">
                     </div>
+                     <div>
+                        <label for="weekly-goal-setting" class="block text-gray-400 font-semibold mb-2">Weekly Workout Goal</label>
+                        <input type="number" id="weekly-goal-setting" class="w-full bg-slate-800 text-gray-200 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="3" min="1" max="7">
+                    </div>
                     <button type="submit" class="futuristic-btn w-full">Save Settings</button>
                 </form>
             </div>
         </div>
-
-
-        <div id="diet-page" class="page-content hidden"><div class="glass-card p-8 text-center text-gray-400 space-y-4"><i data-lucide="utensils" class="w-12 h-12 mx-auto text-gray-500"></i><p class="text-xl font-bold">Diet Page</p><p>Coming Soon!</p></div></div>
     </main>
 
     <footer class="fixed bottom-0 left-0 right-0 bg-slate-800/80 backdrop-blur-md border-t border-slate-700 p-4 z-50">
@@ -288,6 +318,14 @@
         // Settings Elements
         const settingsForm = document.getElementById('settings-form');
         const restTimerSettingInput = document.getElementById('rest-timer-setting');
+        const weeklyGoalSettingInput = document.getElementById('weekly-goal-setting');
+
+        // Diet Page Elements
+        const dietForm = document.getElementById('diet-form');
+        const mealInput = document.getElementById('meal-input');
+        const caloriesInput = document.getElementById('calories-input');
+        const mealHistory = document.getElementById('meal-history');
+
 
         // --- State Variables ---
         let workoutPlan = [];
@@ -297,7 +335,8 @@
         let sessionSetsLogged = 0;
         let sessionRepsCompleted = 0;
         let sessionVolumeLifted = 0;
-        let restTimerDuration = 60; // Default
+        let restTimerDuration = 60;
+        let weeklyWorkoutGoal = 3;
 
         // --- Local Storage Keys ---
         const STORAGE_KEY_COMPLETED = 'completedExercises';
@@ -341,6 +380,8 @@
             // Trigger specific actions for each page
             if (pageId === 'progress') {
                 renderVolumeChart();
+            } else if (pageId === 'diet') {
+                renderDietHistory();
             }
         };
         
@@ -362,10 +403,12 @@
          */
         const fetchWorkoutData = async () => {
             try {
+                // Fetch workout plan for today
                 const planResponse = await fetch(WORKOUT_PLAN_URL);
                 const planText = await planResponse.text();
                 workoutPlan = parseWorkoutPlan(planText);
                 
+                // Fetch all workout history
                 const historyResponse = await fetch(`${APPS_SCRIPT_URL}?action=getHistory`);
                 const historyData = await historyResponse.json();
                 workoutHistory = historyData.data || [];
@@ -433,10 +476,8 @@
         };
 
         const renderDashboard = () => {
-            // Update weekly progress
             const workoutDaysThisWeek = getWorkoutsThisWeek().length;
-            const weeklyGoal = 3; // Example goal
-            const progress = Math.min(100, Math.round((workoutDaysThisWeek / weeklyGoal) * 100));
+            const progress = Math.min(100, Math.round((workoutDaysThisWeek / weeklyWorkoutGoal) * 100));
             weeklyProgressEl.textContent = `${progress}%`;
         };
 
@@ -493,17 +534,44 @@
                 historyListEl.appendChild(setEl);
             });
         };
+        
+        const getWorkoutRecommendation = (exerciseName) => {
+            const lastSession = workoutHistory.find(entry => entry.Exercise && entry.Exercise.trim().toLowerCase() === exerciseName.trim().toLowerCase());
+            
+            if (lastSession) {
+                const lastWeight = parseFloat(lastSession["Weight (kg)"]) || 0;
+                const lastReps = parseInt(lastSession.Reps) || 0;
+                const recommendedReps = lastReps >= 8 ? lastReps + 1 : 12; // Example logic
+                const recommendedWeight = lastWeight; // Simple logic: try to beat reps first
+
+                document.getElementById('rec-weight').textContent = recommendedWeight;
+                document.getElementById('rec-reps').textContent = recommendedReps;
+                document.getElementById('recommendation-section').classList.remove('hidden');
+                weightsInput.value = recommendedWeight;
+                repsInput.value = recommendedReps;
+
+            } else {
+                 document.getElementById('recommendation-section').classList.add('hidden');
+            }
+        };
+
 
         /**
          * Advances to the next exercise or to the summary page.
          */
         const nextExercise = () => {
-            if (currentExerciseIndex < workoutPlan[0].exercises.length - 1) {
-                currentExerciseIndex++;
-                renderExerciseCard();
-            } else {
-                showSummary();
-            }
+             // Mark current exercise as completed visually and in local storage
+            completedExercises.push(currentExerciseIndex);
+            
+            // Wait for the animation to finish before moving to the next card
+            setTimeout(() => {
+                if (currentExerciseIndex < workoutPlan[0].exercises.length - 1) {
+                    currentExerciseIndex++;
+                    renderExerciseCard();
+                } else {
+                    showSummary();
+                }
+            }, 500); 
         };
         
         /**
@@ -512,9 +580,12 @@
         const resetForm = () => {
             logFormContainer.style.display = 'block';
             restTimerUI.style.display = 'none';
-            setsInput.value = parseInt(setsInput.value) + 1;
+            setsInput.value = parseInt(setsInput.value);
             weightsInput.value = '';
             repsInput.value = '';
+
+            const currentExercise = workoutPlan[0].exercises[currentExerciseIndex];
+            getWorkoutRecommendation(currentExercise);
         };
 
         /**
@@ -554,6 +625,8 @@
             const settings = JSON.parse(localStorage.getItem(STORAGE_KEY_SETTINGS)) || {};
             restTimerDuration = parseInt(settings.restTimer) || 60;
             restTimerSettingInput.value = restTimerDuration;
+            weeklyWorkoutGoal = parseInt(settings.weeklyGoal) || 3;
+            weeklyGoalSettingInput.value = weeklyWorkoutGoal;
         };
 
         /**
@@ -562,12 +635,15 @@
         const saveSettings = (e) => {
             e.preventDefault();
             const newDuration = parseInt(restTimerSettingInput.value);
-            if (newDuration >= 30 && newDuration <= 300) {
+            const newGoal = parseInt(weeklyGoalSettingInput.value);
+            
+            if (newDuration >= 30 && newDuration <= 300 && newGoal >= 1 && newGoal <= 7) {
                 restTimerDuration = newDuration;
-                localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify({ restTimer: newDuration }));
+                weeklyWorkoutGoal = newGoal;
+                localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify({ restTimer: newDuration, weeklyGoal: newGoal }));
                 alert("Settings saved!");
             } else {
-                alert("Please enter a value between 30 and 300 seconds.");
+                alert("Please enter a valid rest timer (30-300s) and weekly goal (1-7 workouts).");
             }
         };
         
@@ -657,6 +733,34 @@
             });
         };
 
+        // NEW: Renders meal history on the diet page
+        const renderDietHistory = () => {
+            mealHistory.innerHTML = '<p class="text-gray-400">No meals logged today.</p>';
+        };
+
+        const handleLogMeal = async (e) => {
+            e.preventDefault();
+            const data = {
+                Date: new Date().toLocaleDateString(),
+                Meal: mealInput.value,
+                Calories: caloriesInput.value,
+            };
+
+            try {
+                await fetch(`${APPS_SCRIPT_URL}?action=logDiet`, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(data),
+                });
+                alert("Meal logged successfully!");
+                mealInput.value = '';
+                caloriesInput.value = '';
+            } catch(error) {
+                alert("Failed to log meal. Please check the console.");
+                console.error(error);
+            }
+        };
+
         /**
          * Handles logging a set.
          */
@@ -729,6 +833,8 @@
         
         logSetBtn.addEventListener('click', handleLogSet);
         settingsForm.addEventListener('submit', saveSettings);
+        dietForm.addEventListener('submit', handleLogMeal);
+
 
         // --- Rest Timer Functions ---
         let timerInterval;
