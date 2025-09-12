@@ -1,75 +1,89 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Workout Tracker</title>
+    <!-- Use Tailwind CSS for modern styling and responsiveness -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Custom styles for the logging form */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
         .log-form-container {
             transition: max-height 0.3s ease-in-out;
             max-height: 0;
             overflow: hidden;
         }
         .log-form-container.active {
-            max-height: 200px; /* A value large enough to show the form */
+            max-height: 250px; /* A value large enough to show the form */
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4 md:p-8">
 
-    <div id="app" class="w-full max-w-xl mx-auto">
-        <div id="card-container" class="relative bg-white shadow-xl rounded-2xl p-6 md:p-8">
-            <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Workout Tracker</h1>
+    <div id="app" class="w-full max-w-2xl mx-auto">
+        <!-- Main card container -->
+        <div id="card-container" class="relative bg-white shadow-2xl rounded-3xl p-6 md:p-12">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-center text-gray-900 mb-8">Workout Tracker</h1>
 
+            <!-- Loading state -->
             <div id="loading" class="text-center py-12">
                 <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-gray-900 mx-auto"></div>
-                <p class="mt-4 text-gray-600">Loading workouts...</p>
+                <p class="mt-4 text-gray-600">Loading today's workout plan...</p>
             </div>
 
-            <div id="flashcard" class="hidden">
+            <!-- Flashcard content -->
+            <div id="flashcard" class="hidden text-center">
+                <!-- "Done" checkbox -->
                 <div class="flex justify-end mb-4">
                     <label class="flex items-center space-x-2 text-gray-600">
-                        <input type="checkbox" id="done-checkbox" class="h-5 w-5 rounded focus:ring-blue-500 text-blue-600">
+                        <input type="checkbox" id="done-checkbox" class="h-5 w-5 rounded-md focus:ring-blue-500 text-blue-600 transition duration-150 ease-in-out">
                         <span>Done</span>
                     </label>
                 </div>
                 
-                <h2 id="card-day" class="text-xl font-bold text-center mb-2 text-gray-800"></h2>
-                <h3 id="card-note" class="text-lg text-gray-500 text-center mb-4"></h3>
-                <div class="text-3xl font-semibold text-center mb-6 text-gray-900" id="card-exercise"></div>
+                <h2 id="card-day" class="text-xl md:text-2xl font-bold text-gray-800 mb-2"></h2>
+                <h3 id="card-note" class="text-base md:text-lg font-medium text-gray-500 mb-6"></h3>
+                <div class="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-8" id="card-exercise"></div>
 
+                <!-- Log Set button -->
                 <div class="flex justify-center mb-6">
-                    <button id="log-set-btn" class="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition duration-300">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <button id="log-set-btn" class="bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-110 duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
                     </button>
                 </div>
 
-                <div id="log-form-container" class="log-form-container">
+                <!-- Log Set form -->
+                <div id="log-form-container" class="log-form-container w-full mx-auto">
                     <div class="flex flex-col space-y-4">
                         <div class="flex items-center space-x-4">
-                            <label for="sets-input" class="text-gray-600 w-16">Sets</label>
-                            <input type="number" id="sets-input" class="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="1" value="1" min="1">
+                            <label for="sets-input" class="text-gray-600 text-sm font-semibold w-16 text-left">Sets</label>
+                            <input type="number" id="sets-input" class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="1" value="1" min="1">
                         </div>
                         <div class="flex items-center space-x-4">
-                            <label for="weights-input" class="text-gray-600 w-16">Weight</label>
-                            <input type="number" id="weights-input" class="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 20">
+                            <label for="weights-input" class="text-gray-600 text-sm font-semibold w-16 text-left">Weight</label>
+                            <input type="number" id="weights-input" class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 20">
                         </div>
                         <div class="flex items-center space-x-4">
-                            <label for="reps-input" class="text-gray-600 w-16">Reps</label>
-                            <input type="number" id="reps-input" class="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 10">
+                            <label for="reps-input" class="text-gray-600 text-sm font-semibold w-16 text-left">Reps</label>
+                            <input type="number" id="reps-input" class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 10">
                         </div>
-                        <button id="submit-log-btn" class="bg-green-600 text-white p-3 rounded-md font-semibold hover:bg-green-700 transition duration-300">Log Set</button>
+                        <button id="submit-log-btn" class="bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 transition duration-300">Log Set</button>
                     </div>
                 </div>
             </div>
 
+            <!-- Navigation buttons -->
             <div class="flex justify-between mt-8">
-                <button id="prev-btn" class="bg-gray-200 text-gray-800 py-2 px-4 rounded-md font-semibold hover:bg-gray-300 transition duration-300">Previous</button>
-                <button id="next-btn" class="bg-blue-600 text-white py-2 px-4 rounded-md font-semibold hover:bg-blue-700 transition duration-300">Next</button>
+                <button id="prev-btn" class="bg-gray-200 text-gray-800 py-3 px-6 rounded-lg font-semibold hover:bg-gray-300 transition duration-300">Previous</button>
+                <button id="next-btn" class="bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition duration-300">Next</button>
             </div>
         </div>
     </div>
@@ -96,16 +110,21 @@
         const repsInput = document.getElementById('reps-input');
 
         // --- State Variables ---
-        let workoutPlan = [];
-        let currentDayIndex = 0;
+        let workoutsForToday = [];
         let currentExerciseIndex = 0;
         let currentSet = 1;
 
         // --- Utility Functions ---
 
-        // Parses CSV data into a structured workout plan
+        /**
+         * Parses CSV data from the Google Sheet URL into a structured format.
+         * @param {string} text The raw CSV text content.
+         * @returns {Array<object>} An array of workout objects.
+         */
         const parseCSV = (text) => {
             const lines = text.split('\n').filter(line => line.trim() !== '');
+            if (lines.length === 0) return [];
+            
             const headers = lines[0].split(',').map(header => header.trim());
             const data = lines.slice(1).map(line => {
                 const values = line.split(',').map(val => val.trim());
@@ -116,78 +135,79 @@
                 return row;
             });
 
-            // Restructure data for easier access
-            return data.map(dayRow => {
-                const exercises = [];
-                for (let i = 1; i <= 10; i++) {
-                    const exerciseKey = `Exercise ${i}`;
-                    if (dayRow[exerciseKey] && dayRow[exerciseKey].trim() !== '') {
-                        exercises.push(dayRow[exerciseKey]);
-                    }
+            // Filter for today's workout and format it
+            const today = new Date().toLocaleString('en-US', { weekday: 'long' });
+            const todayWorkout = data.find(dayRow => dayRow.Day && dayRow.Day.toLowerCase() === today.toLowerCase());
+
+            if (!todayWorkout) {
+                return [];
+            }
+            
+            const exercises = [];
+            for (let i = 1; i <= 10; i++) {
+                const exerciseKey = `Exercise ${i}`;
+                if (todayWorkout[exerciseKey] && todayWorkout[exerciseKey].trim() !== '') {
+                    exercises.push(todayWorkout[exerciseKey]);
                 }
-                return {
-                    day: dayRow.Day,
-                    note: dayRow.Note,
-                    exercises: exercises
-                };
-            });
+            }
+
+            return [{
+                day: todayWorkout.Day,
+                note: todayWorkout.Note,
+                exercises: exercises
+            }];
         };
 
-        // Renders the current day and exercise on the card
+        /**
+         * Renders the current exercise on the card.
+         */
         const renderCard = () => {
-            const currentDay = workoutPlan[currentDayIndex];
-            if (!currentDay || !currentDay.exercises[currentExerciseIndex]) {
+            if (workoutsForToday.length === 0 || workoutsForToday[0].exercises.length === 0) {
+                loadingEl.textContent = "No workouts found for today.";
                 return;
             }
 
-            cardDayEl.textContent = currentDay.day;
-            cardNoteEl.textContent = currentDay.note || '';
-            cardExerciseEl.textContent = currentDay.exercises[currentExerciseIndex];
+            const currentWorkout = workoutsForToday[0];
+            const currentExercise = currentWorkout.exercises[currentExerciseIndex];
+
+            cardDayEl.textContent = currentWorkout.day;
+            cardNoteEl.textContent = currentWorkout.note || '';
+            cardExerciseEl.textContent = currentExercise;
             
-            // Reset state
+            // Reset state for new exercise
             setsInput.value = currentSet;
             doneCheckbox.checked = false;
         };
 
-        // Advances to the next exercise or day
+        /**
+         * Advances to the next exercise.
+         */
         const nextCard = () => {
-            const currentDay = workoutPlan[currentDayIndex];
-            
-            // Move to the next exercise within the same day
-            if (currentExerciseIndex < currentDay.exercises.length - 1) {
+            if (currentExerciseIndex < workoutsForToday[0].exercises.length - 1) {
                 currentExerciseIndex++;
-            } 
-            // Move to the next day
-            else if (currentDayIndex < workoutPlan.length - 1) {
-                currentDayIndex++;
-                currentExerciseIndex = 0; // Reset exercise index for the new day
+                renderCard();
+                resetForm();
             } else {
-                alert("You've completed all workouts!");
-                return;
+                alert("You've completed all workouts for today!");
             }
-            renderCard();
-            resetForm();
         };
 
-        // Goes back to the previous exercise or day
+        /**
+         * Goes back to the previous exercise.
+         */
         const prevCard = () => {
-            // Move to the previous exercise
             if (currentExerciseIndex > 0) {
                 currentExerciseIndex--;
-            } 
-            // Move to the previous day
-            else if (currentDayIndex > 0) {
-                currentDayIndex--;
-                currentExerciseIndex = workoutPlan[currentDayIndex].exercises.length - 1; // Go to last exercise of the previous day
+                renderCard();
+                resetForm();
             } else {
-                alert("You are at the beginning of your plan.");
-                return;
+                alert("You are at the first exercise.");
             }
-            renderCard();
-            resetForm();
         };
 
-        // Resets the logging form
+        /**
+         * Resets the logging form.
+         */
         const resetForm = () => {
             logFormContainer.classList.remove('active');
             currentSet = 1;
@@ -196,9 +216,9 @@
             repsInput.value = '';
         };
 
-        // --- Main Logic ---
-
-        // Sends data to the Apps Script backend
+        /**
+         * Sends data to the Apps Script backend.
+         */
         const logSet = async () => {
             const data = {
                 Date: new Date().toLocaleDateString(),
@@ -210,7 +230,8 @@
             };
 
             try {
-                const response = await fetch(APPS_SCRIPT_URL, {
+                // Fetch call to the Apps Script URL
+                await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
@@ -247,17 +268,18 @@
                 const response = await fetch(WORKOUT_PLAN_URL);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const text = await response.text();
-                workoutPlan = parseCSV(text);
-                if (workoutPlan.length > 0 && workoutPlan[0].exercises.length > 0) {
+                workoutsForToday = parseCSV(text);
+                
+                if (workoutsForToday.length > 0 && workoutsForToday[0].exercises.length > 0) {
                     loadingEl.style.display = 'none';
                     flashcardEl.style.display = 'block';
                     renderCard();
                 } else {
-                    loadingEl.textContent = "No workouts found or sheet is empty.";
+                    loadingEl.textContent = "No workouts found for today or sheet is empty.";
                 }
             } catch (error) {
                 console.error("Could not fetch workout data:", error);
-                loadingEl.textContent = "Error loading workouts. Check the URL.";
+                loadingEl.textContent = "Error loading workouts. Please check your sheet and the URL.";
             }
         };
 
