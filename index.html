@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Tracker Pro</title>
+    <title>Workout Tracker Pro</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -99,12 +99,32 @@
             font-weight: bold;
             color: #ef4444; /* red-500 */
         }
+        
+        /* Fade-in animation for pages */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        /* PR celebration styles */
+        .pr-alert {
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
     </style>
 </head>
 <body class="dark-theme">
     <main class="page mt-8">
         <div id="dashboard-page" class="page-content hidden">
-            <div class="glass-card p-8 text-center">
+            <div class="glass-card p-8 text-center fade-in">
                 <h2 class="text-3xl font-extrabold mb-4">Welcome Back!</h2>
                 <p class="text-lg text-gray-400 mb-8">Ready to hit your goals today?</p>
                 <button id="start-session-btn" class="futuristic-btn py-4 w-full">Start Today's Session</button>
@@ -117,7 +137,7 @@
                 <p class="mt-4 text-gray-400">Loading today's workout...</p>
             </div>
 
-            <div id="workout-ui" class="hidden">
+            <div id="workout-ui" class="hidden fade-in">
                 <div class="glass-card p-6 md:p-8 space-y-6">
                     <div class="flex justify-between items-center text-gray-400 font-semibold mb-4">
                         <span id="day-of-week"></span>
@@ -162,7 +182,7 @@
         </div>
 
         <div id="summary-page" class="page-content hidden">
-            <div class="glass-card p-8 text-center">
+            <div class="glass-card p-8 text-center fade-in">
                 <h2 class="text-3xl font-extrabold mb-4">Session Complete! 🎉</h2>
                 <p class="text-lg text-gray-400 mb-8">You crushed your workout today!</p>
                 <div class="space-y-4">
@@ -173,6 +193,10 @@
                     <div class="bg-blue-600/20 p-4 rounded-lg">
                         <p class="text-xl font-bold text-blue-400" id="summary-reps">0</p>
                         <p class="text-gray-400">Total Reps Completed</p>
+                    </div>
+                     <div class="bg-blue-600/20 p-4 rounded-lg">
+                        <p class="text-xl font-bold text-blue-400" id="summary-volume">0</p>
+                        <p class="text-gray-400">Total Volume Lifted (kg)</p>
                     </div>
                 </div>
             </div>
@@ -185,7 +209,7 @@
 
     <footer class="fixed bottom-0 left-0 right-0 bg-slate-800/80 backdrop-blur-md border-t border-slate-700 p-4 z-50">
         <nav class="flex justify-around items-center max-w-lg mx-auto">
-            <a href="#dashboard" class="nav-item" data-page="dashboard"><i data-lucide="layout-dashboard" class="w-6 h-6"></i><span class="text-xs mt-1">Dashboard</span></a>
+            <a href="#dashboard" class="nav-item active" data-page="dashboard"><i data-lucide="layout-dashboard" class="w-6 h-6"></i><span class="text-xs mt-1">Dashboard</span></a>
             <a href="#workout" class="nav-item" data-page="workout"><i data-lucide="dumbbell" class="w-6 h-6"></i><span class="text-xs mt-1">Workout</span></a>
             <a href="#diet" class="nav-item" data-page="diet"><i data-lucide="utensils" class="w-6 h-6"></i><span class="text-xs mt-1">Diet</span></a>
             <a href="#progress" class="nav-item" data-page="progress"><i data-lucide="bar-chart-2" class="w-6 h-6"></i><span class="text-xs mt-1">Progress</span></a>
@@ -229,8 +253,9 @@
         let completedExercises = [];
         let workoutHistory = [];
         let currentExerciseIndex = 0;
-        let totalSetsLogged = 0;
-        let totalRepsCompleted = 0;
+        let sessionSetsLogged = 0;
+        let sessionRepsCompleted = 0;
+        let sessionVolumeLifted = 0;
 
         // --- Local Storage Keys ---
         const STORAGE_KEY_COMPLETED = 'completedExercises';
@@ -377,11 +402,6 @@
             exerciseNameEl.textContent = currentExercise;
             exerciseNoteEl.textContent = currentWorkout.note || '';
 
-            // Update visual state (grey out if completed)
-            const isCompleted = completedExercises.includes(currentExerciseIndex);
-            document.getElementById('exercise-card').classList.toggle('opacity-50', isCompleted);
-            document.getElementById('exercise-card').classList.toggle('pointer-events-none', isCompleted);
-
             displayProgressiveOverload(currentExercise);
             resetForm();
         };
@@ -412,12 +432,20 @@
          * Advances to the next exercise or to the summary page.
          */
         const nextExercise = () => {
-            if (currentExerciseIndex < workoutPlan[0].exercises.length - 1) {
-                currentExerciseIndex++;
-                renderExerciseCard();
-            } else {
-                showSummary();
-            }
+             // Mark current exercise as completed visually and in local storage
+            completedExercises.push(currentExerciseIndex);
+            saveCompletedExercises();
+            document.getElementById('exercise-card').classList.add('opacity-50', 'pointer-events-none');
+            
+            // Wait for the animation to finish before moving to the next card
+            setTimeout(() => {
+                if (currentExerciseIndex < workoutPlan[0].exercises.length - 1) {
+                    currentExerciseIndex++;
+                    renderExerciseCard();
+                } else {
+                    showSummary();
+                }
+            }, 500); 
         };
         
         /**
@@ -438,8 +466,9 @@
         const showSummary = () => {
             document.getElementById('summary-page').classList.remove('hidden');
             document.getElementById('workout-ui').classList.add('hidden');
-            document.getElementById('summary-sets').textContent = totalSetsLogged;
-            document.getElementById('summary-reps').textContent = totalRepsCompleted;
+            document.getElementById('summary-sets').textContent = sessionSetsLogged;
+            document.getElementById('summary-reps').textContent = sessionRepsCompleted;
+            document.getElementById('summary-volume').textContent = sessionVolumeLifted.toFixed(0);
         };
 
         /**
@@ -476,19 +505,43 @@
          */
         const handleLogSet = async () => {
             const exerciseName = exerciseNameEl.textContent;
+            const weight = parseFloat(weightsInput.value) || 0;
+            const reps = parseInt(repsInput.value) || 0;
+            const sets = parseInt(setsInput.value) || 1;
+
+            if (weight === 0 || reps === 0) {
+                 alert("Please enter a valid weight and number of reps.");
+                return;
+            }
+
+            // Check for PR before logging
+            const oldRecords = workoutHistory.filter(entry => entry.Exercise && entry.Exercise.trim().toLowerCase() === exerciseName.trim().toLowerCase());
+            const highestWeight = oldRecords.reduce((max, entry) => Math.max(max, parseFloat(entry["Weight (kg)"]) || 0), 0);
+            const highestReps = oldRecords.reduce((max, entry) => Math.max(max, parseInt(entry.Reps) || 0), 0);
+            
+            const isNewPR = (weight > highestWeight) || (weight === highestWeight && reps > highestReps);
+
+            if (isNewPR) {
+                const prMessage = document.createElement('div');
+                prMessage.className = 'pr-alert mt-4 p-2 bg-yellow-500/20 text-yellow-300 rounded-lg font-bold text-center';
+                prMessage.textContent = '🎉 New Personal Record!';
+                logFormContainer.appendChild(prMessage);
+            }
+
             const data = {
                 Date: new Date().toLocaleDateString(),
                 Exercise: exerciseName,
-                Sets: setsInput.value,
-                Reps: repsInput.value,
-                "Weight (kg)": weightsInput.value,
+                Sets: sets,
+                Reps: reps,
+                "Weight (kg)": weight,
                 Notes: exerciseNoteEl.textContent
             };
 
-            // Log total stats
-            totalSetsLogged++;
-            totalRepsCompleted += parseInt(repsInput.value) || 0;
-
+            // Log total stats for this session
+            sessionSetsLogged++;
+            sessionRepsCompleted += reps;
+            sessionVolumeLifted += weight * reps;
+            
             try {
                 // POST data to Apps Script
                 await fetch(APPS_SCRIPT_URL, {
@@ -500,18 +553,12 @@
                 console.log('Set logged successfully.');
                 
                 // Check if this set completes the exercise
-                const currentSetCount = parseInt(setsInput.value);
-                const isCompleted = currentSetCount >= 3; // Assuming 3 sets per exercise
-                
-                if (isCompleted) {
-                    completedExercises.push(currentExerciseIndex);
-                    saveCompletedExercises();
+                if (sets >= 3) { // Assuming 3 sets per exercise
                     nextExercise();
                 } else {
                     // Start the rest timer
                     startRestTimer(60);
-                    currentSet++;
-                    setsInput.value = currentSet;
+                    setsInput.value = sets + 1;
                     weightsInput.value = '';
                     repsInput.value = '';
                 }
