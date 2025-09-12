@@ -371,8 +371,9 @@
                     skipEmptyLines: true,
                     complete: (results) => {
                         console.log("Raw Workouts Data:", results.data); // DEBUGGING LINE
+                        console.log("Headers from CSV:", results.meta.fields); // LOGGING HEADERS
                         const allWorkouts = results.data;
-                        const todaysWorkouts = allWorkouts.filter(w => w.DAY && w.DAY.toLowerCase().includes(todayName.toLowerCase()));
+                        const todaysWorkouts = allWorkouts.filter(w => w['DAY'] && String(w['DAY']).trim().toLowerCase().includes(todayName.toLowerCase()));
 
                         if (todaysWorkouts.length === 0) {
                             container.innerHTML = `<div class="glass-card p-6 text-center">
@@ -407,16 +408,19 @@
 
         async function renderWorkoutCard(workout) {
             const container = document.getElementById('workouts-container');
-            const workoutName = workout.WORKOUT || 'Unknown Workout';
+            const workoutName = workout['WORKOUT'] || 'Unknown Workout';
             const historicalData = await getHistoricalWorkoutData(workoutName);
 
-            const sets = workout.SETS || 1;
-            const reps = workout.REPS || 'N/A';
-            const weight = workout.WEIGHT || 'N/A';
+            const sets = workout['SETS'] || 1;
+            const reps = workout['REPS'] || 'N/A';
+            const weight = workout['WEIGHT'] || 'N/A';
+            const muscle = workout['MUSCLE_GROUP'] || '';
+            const type = workout['EXERCISE_TYPE'] || '';
+
             const cardHtml = `
                 <div class="glass-card p-4 fade-in-up" data-workout="${workoutName}">
                     <h2 class="text-xl font-bold mb-2">${workoutName}</h2>
-                    <p class="text-sm text-muted mb-4">${workout.MUSCLE_GROUP || ''} | ${workout.EXERCISE_TYPE || ''}</p>
+                    <p class="text-sm text-muted mb-4">${muscle} | ${type}</p>
                     
                     <h3 class="font-semibold text-muted mb-2">Previous Progress:</h3>
                     <div class="space-y-2 mb-4 text-sm">
