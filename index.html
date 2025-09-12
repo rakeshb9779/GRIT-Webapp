@@ -6,277 +6,225 @@
     <title>Workout Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+        /* Custom styles for the logging form */
+        .log-form-container {
+            transition: max-height 0.3s ease-in-out;
+            max-height: 0;
+            overflow: hidden;
         }
-        .card {
-            min-height: 400px;
+        .log-form-container.active {
+            max-height: 200px; /* A value large enough to show the form */
         }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
-    <div class="w-full max-w-lg">
-        <div id="loading" class="text-center text-gray-500 font-semibold text-lg animate-pulse">
-            Fetching workout data...
-        </div>
+    <div id="app" class="w-full max-w-xl mx-auto">
+        <div id="card-container" class="relative bg-white shadow-xl rounded-2xl p-6 md:p-8">
+            <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Workout Tracker</h1>
 
-        <div id="app" class="hidden">
-            <!-- Workout Flashcard -->
-            <div id="workoutCard" class="relative bg-white rounded-xl shadow-lg p-6 mb-8 card transform transition-transform duration-300">
-                <div class="absolute top-4 right-4">
-                    <label class="flex items-center text-gray-600 cursor-pointer">
-                        <input type="checkbox" id="doneCheckbox" class="h-5 w-5 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300">
-                        <span class="ml-2 text-sm font-medium select-none">Done</span>
+            <div id="loading" class="text-center py-12">
+                <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-gray-900 mx-auto"></div>
+                <p class="mt-4 text-gray-600">Loading workouts...</p>
+            </div>
+
+            <div id="flashcard" class="hidden">
+                <div class="flex justify-end mb-4">
+                    <label class="flex items-center space-x-2 text-gray-600">
+                        <input type="checkbox" id="done-checkbox" class="h-5 w-5 rounded focus:ring-blue-500 text-blue-600">
+                        <span>Done</span>
                     </label>
                 </div>
                 
-                <h2 id="workoutTitle" class="text-3xl font-bold text-center text-gray-800 mb-2"></h2>
-                <div class="text-center text-sm font-medium text-gray-500 mb-6">Day: <span id="dayNote"></span></div>
-                
-                <div id="exercisesContainer" class="space-y-4">
-                    <!-- Exercises will be injected here -->
+                <h2 id="card-title" class="text-2xl font-semibold text-center mb-4 text-gray-800"></h2>
+                <div id="card-description" class="text-lg text-gray-600 text-center mb-6"></div>
+
+                <div class="flex justify-center mb-6">
+                    <button id="log-set-btn" class="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div id="log-form-container" class="log-form-container">
+                    <div class="flex flex-col space-y-4">
+                        <div class="flex items-center space-x-4">
+                            <label for="sets-input" class="text-gray-600 w-16">Sets</label>
+                            <input type="number" id="sets-input" class="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="1" value="1" min="1">
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <label for="weights-input" class="text-gray-600 w-16">Weight</label>
+                            <input type="number" id="weights-input" class="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 20">
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <label for="reps-input" class="text-gray-600 w-16">Reps</label>
+                            <input type="number" id="reps-input" class="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 10">
+                        </div>
+                        <button id="submit-log-btn" class="bg-green-600 text-white p-3 rounded-md font-semibold hover:bg-green-700 transition duration-300">Log Set</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Navigation Buttons -->
-            <div class="flex justify-between items-center mb-6">
-                <button id="prevBtn" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-full font-medium shadow-md hover:bg-gray-300 transition-colors duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
-                <div id="logFormToggle" class="bg-indigo-600 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-700 transition-colors duration-200 transform hover:scale-110 cursor-pointer">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                </div>
-                <button id="nextBtn" class="bg-indigo-600 text-white px-6 py-2 rounded-full font-medium shadow-md hover:bg-indigo-700 transition-colors duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
-            </div>
-
-            <!-- Log Data Form -->
-            <div id="logForm" class="hidden bg-white p-6 rounded-xl shadow-lg mt-8 transition-all duration-300 ease-in-out transform scale-95 opacity-0">
-                <h3 class="text-xl font-semibold text-gray-800 mb-4">Log a New Set</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div>
-                        <label for="sets" class="block text-sm font-medium text-gray-700">Set</label>
-                        <input type="number" id="sets" value="1" readonly class="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 bg-gray-100 cursor-not-allowed">
-                    </div>
-                    <div>
-                        <label for="weights" class="block text-sm font-medium text-gray-700">Weights</label>
-                        <input type="number" id="weights" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2" placeholder="e.g., 50">
-                    </div>
-                    <div>
-                        <label for="reps" class="block text-sm font-medium text-gray-700">Reps</label>
-                        <input type="number" id="reps" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2" placeholder="e.g., 12">
-                    </div>
-                </div>
-                <button id="logBtn" class="w-full bg-green-500 text-white px-6 py-3 rounded-full font-bold shadow-lg hover:bg-green-600 transition-colors duration-200 transform hover:scale-105">Log Set</button>
-                <div id="message" class="mt-4 text-center text-sm font-medium text-gray-600"></div>
+            <div class="flex justify-between mt-8">
+                <button id="prev-btn" class="bg-gray-200 text-gray-800 py-2 px-4 rounded-md font-semibold hover:bg-gray-300 transition duration-300">Previous</button>
+                <button id="next-btn" class="bg-blue-600 text-white py-2 px-4 rounded-md font-semibold hover:bg-blue-700 transition duration-300">Next</button>
             </div>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // NOTE: You MUST replace this with your Apps Script Web App URL after deployment.
-            // Follow the instructions provided to get this URL.
-            const appsScriptUrl = 'https://script.google.com/macros/s/AKfycbyBvh6uogeuSdKEjaodMCbKpSA7qUqSY7d-XAZ_6y_L_C5eVZCWNegZQ54g4zv7ZSq0/exec';
+        // Constants from your provided links
+        const WORKOUT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQiJvI_6Sskh-ei7zjY-8lFbUoFY-2n--zZQAgvnucn3WlJlrr5MFB93j5x9WKZY2pOW3UEjvB8sfY_/pub?gid=0&single=true&output=csv";
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBvh6uogeuSdKEjaodMCbKpSA7qUqSY7d-XAZ_6y_L_C5eVZCWNegZQ54g4zv7ZSq0/exec";
 
-            // Global state variables
-            let workouts = [];
-            let currentIndex = 0;
-            let setsCount = 1;
+        // DOM elements
+        const loadingEl = document.getElementById('loading');
+        const flashcardEl = document.getElementById('flashcard');
+        const cardTitleEl = document.getElementById('card-title');
+        const cardDescriptionEl = document.getElementById('card-description');
+        const logSetBtn = document.getElementById('log-set-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const doneCheckbox = document.getElementById('done-checkbox');
+        const logFormContainer = document.getElementById('log-form-container');
+        const submitLogBtn = document.getElementById('submit-log-btn');
+        const setsInput = document.getElementById('sets-input');
+        const weightsInput = document.getElementById('weights-input');
+        const repsInput = document.getElementById('reps-input');
 
-            // DOM elements
-            const loadingEl = document.getElementById('loading');
-            const appEl = document.getElementById('app');
-            const workoutCardEl = document.getElementById('workoutCard');
-            const workoutTitleEl = document.getElementById('workoutTitle');
-            const dayNoteEl = document.getElementById('dayNote');
-            const exercisesContainerEl = document.getElementById('exercisesContainer');
-            const doneCheckbox = document.getElementById('doneCheckbox');
-            const prevBtn = document.getElementById('prevBtn');
-            const nextBtn = document.getElementById('nextBtn');
-            const logFormToggle = document.getElementById('logFormToggle');
-            const logForm = document.getElementById('logForm');
-            const logBtn = document.getElementById('logBtn');
-            const setsInput = document.getElementById('sets');
-            const weightsInput = document.getElementById('weights');
-            const repsInput = document.getElementById('reps');
-            const messageEl = document.getElementById('message');
+        let workouts = [];
+        let currentIndex = 0;
+        let currentSet = 1;
 
-            const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQiJvI_6Sskh-ei7zjY-8lFbUoFY-2n--zZQAgvnucn3WlJlrr5MFB93j5x9WKZY2pOW3UEjvB8sfY_/pub?gid=0&single=true&output=csv';
-
-            // Function to fetch and parse the CSV data
-            async function fetchWorkouts() {
-                try {
-                    const response = await fetch(googleSheetUrl);
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch data from Google Sheet');
-                    }
-                    const csvText = await response.text();
-                    const lines = csvText.split('\n').slice(1); // Skip header row
-                    workouts = lines.map(line => {
-                        const values = line.split(',');
-                        return {
-                            Day: values[0]?.trim(),
-                            Note: values[1]?.trim(),
-                            Exercises: values.slice(2).map(ex => ex.trim()).filter(ex => ex)
-                        };
-                    }).filter(workout => workout.Exercises.length > 0);
-
-                    if (workouts.length === 0) {
-                        loadingEl.textContent = 'No workout data found.';
-                        return;
-                    }
-
-                    loadingEl.classList.add('hidden');
-                    appEl.classList.remove('hidden');
-                    renderWorkout();
-
-                } catch (error) {
-                    console.error('Error fetching data:', error);
-                    loadingEl.textContent = 'Error: Failed to load workout data.';
-                }
-            }
-
-            // Function to render the current workout
-            function renderWorkout() {
-                if (workouts.length === 0) return;
-
-                const currentWorkout = workouts[currentIndex];
-                workoutTitleEl.textContent = `Day: ${currentWorkout.Day}`;
-                dayNoteEl.textContent = currentWorkout.Note;
-
-                exercisesContainerEl.innerHTML = '';
-                currentWorkout.Exercises.forEach(exercise => {
-                    const exerciseEl = document.createElement('div');
-                    exerciseEl.className = 'bg-gray-50 rounded-md p-3 text-center text-lg font-medium text-gray-700 shadow-sm';
-                    exerciseEl.textContent = exercise;
-                    exercisesContainerEl.appendChild(exerciseEl);
+        // Function to parse CSV data
+        const parseCSV = (text) => {
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            const headers = lines[0].split(',').map(header => header.trim().toLowerCase());
+            const data = lines.slice(1).map(line => {
+                const values = line.split(',').map(val => val.trim());
+                const row = {};
+                headers.forEach((header, i) => {
+                    row[header] = values[i];
                 });
+                return row;
+            });
+            return data;
+        };
 
-                // Reset the form and checkbox
-                setsCount = 1;
-                setsInput.value = setsCount;
+        // Function to render the current workout flashcard
+        const renderCard = () => {
+            const workout = workouts[currentIndex];
+            if (workout) {
+                cardTitleEl.textContent = workout.workout;
+                cardDescriptionEl.textContent = workout.description;
+                setsInput.value = currentSet;
+                doneCheckbox.checked = false;
+            }
+        };
+
+        // Function to advance to the next workout
+        const nextCard = () => {
+            if (currentIndex < workouts.length - 1) {
+                currentIndex++;
+                renderCard();
+                resetForm();
+            } else {
+                alert("You've completed all workouts for today!");
+            }
+        };
+
+        // Function to go back to the previous workout
+        const prevCard = () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderCard();
+                resetForm();
+            }
+        };
+
+        // Function to reset the logging form
+        const resetForm = () => {
+            logFormContainer.classList.remove('active');
+            currentSet = 1;
+            setsInput.value = currentSet;
+            weightsInput.value = '';
+            repsInput.value = '';
+        };
+
+        // Function to send data to the Apps Script backend
+        const logSet = async () => {
+            const workoutData = workouts[currentIndex];
+            const data = {
+                timestamp: new Date().toISOString(),
+                workout: workoutData.workout,
+                sets: setsInput.value,
+                weights: weightsInput.value,
+                reps: repsInput.value,
+                notes: workoutData.notes || '', // Include notes if available
+            };
+
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Required for Google Apps Script
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+                console.log('Data sent successfully.');
+                // Handle the UI after successful log
+                alert('Set logged successfully!');
+                currentSet++;
+                setsInput.value = currentSet;
                 weightsInput.value = '';
                 repsInput.value = '';
-                doneCheckbox.checked = false;
-                hideLogForm();
-
-                // Update navigation button states
-                prevBtn.disabled = currentIndex === 0;
-                nextBtn.disabled = currentIndex === workouts.length - 1;
-
-                // Animate card transition
-                workoutCardEl.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    workoutCardEl.style.transform = 'scale(1)';
-                }, 50);
+            } catch (error) {
+                console.error('Error logging data:', error);
+                alert('Failed to log set. Check console for details.');
             }
+        };
 
-            // Function to show the log form
-            function showLogForm() {
-                logForm.classList.remove('hidden');
-                logForm.classList.add('scale-100', 'opacity-100');
-            }
-            
-            // Function to hide the log form
-            function hideLogForm() {
-                logForm.classList.add('scale-95', 'opacity-0');
-                setTimeout(() => {
-                    logForm.classList.add('hidden');
-                }, 300);
-            }
-
-            // Event Listeners
-            doneCheckbox.addEventListener('change', () => {
-                if (doneCheckbox.checked) {
-                    setTimeout(() => {
-                        if (currentIndex < workouts.length - 1) {
-                            currentIndex++;
-                            renderWorkout();
-                        } else {
-                            // Optionally loop or show a finished message
-                            messageEl.textContent = "You've completed all workouts!";
-                            messageEl.classList.add('text-green-600');
-                        }
-                    }, 500); // Small delay for visual effect
-                }
-            });
-
-            prevBtn.addEventListener('click', () => {
-                if (currentIndex > 0) {
-                    currentIndex--;
-                    renderWorkout();
-                }
-            });
-
-            nextBtn.addEventListener('click', () => {
-                if (currentIndex < workouts.length - 1) {
-                    currentIndex++;
-                    renderWorkout();
-                }
-            });
-
-            logFormToggle.addEventListener('click', () => {
-                if (logForm.classList.contains('hidden')) {
-                    showLogForm();
-                } else {
-                    hideLogForm();
-                }
-            });
-
-            logBtn.addEventListener('click', async () => {
-                const currentWorkout = workouts[currentIndex];
-                const exercise = currentWorkout.Exercises[0]; 
-                const sets = setsInput.value;
-                const weights = weightsInput.value;
-                const reps = repsInput.value;
-
-                if (!weights || !reps) {
-                    messageEl.textContent = 'Please fill out all fields.';
-                    messageEl.classList.remove('text-green-600');
-                    messageEl.classList.add('text-red-500');
-                    return;
-                }
-
-                messageEl.textContent = 'Logging data...';
-                messageEl.classList.remove('text-red-500', 'text-green-600');
-
-                try {
-                    const response = await fetch(appsScriptUrl, {
-                        method: 'POST',
-                        body: JSON.stringify({ exercise, sets, weights, reps }),
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    const result = await response.json();
-                    
-                    if (result.status === 'success') {
-                        messageEl.textContent = 'Data logged successfully!';
-                        messageEl.classList.add('text-green-600');
-                        
-                        // Reset fields and increment set count
-                        setsCount++;
-                        setsInput.value = setsCount;
-                        weightsInput.value = '';
-                        repsInput.value = '';
-                        setTimeout(() => messageEl.textContent = '', 3000);
-
-                    } else {
-                        messageEl.textContent = `Error: ${result.message}`;
-                        messageEl.classList.add('text-red-500');
-                    }
-                } catch (error) {
-                    messageEl.textContent = 'Failed to log data. Check console for details.';
-                    messageEl.classList.add('text-red-500');
-                    console.error('Error logging data:', error);
-                }
-            });
-
-            // Initial data fetch
-            fetchWorkouts();
+        // Event Listeners
+        logSetBtn.addEventListener('click', () => {
+            logFormContainer.classList.toggle('active');
         });
+
+        submitLogBtn.addEventListener('click', logSet);
+
+        doneCheckbox.addEventListener('change', (event) => {
+            if (event.target.checked) {
+                nextCard();
+            }
+        });
+
+        nextBtn.addEventListener('click', nextCard);
+        prevBtn.addEventListener('click', prevCard);
+
+        // Fetch workout data on page load
+        const init = async () => {
+            try {
+                const response = await fetch(WORKOUT_CSV_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const text = await response.text();
+                workouts = parseCSV(text);
+                if (workouts.length > 0) {
+                    loadingEl.style.display = 'none';
+                    flashcardEl.style.display = 'block';
+                    renderCard();
+                } else {
+                    loadingEl.textContent = "No workouts found.";
+                }
+            } catch (error) {
+                console.error("Could not fetch workout data:", error);
+                loadingEl.textContent = "Error loading workouts. Check the URL.";
+            }
+        };
+
+        init();
     </script>
 </body>
 </html>
