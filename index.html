@@ -1,3 +1,4 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Workout Tracker Pro</title>
 
+    <!-- Tailwind CSS for modern styling and responsiveness -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -136,6 +138,24 @@
             justify-content: center;
             z-index: 10;
         }
+        .add-set-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #facc15;
+            color: #1f2937;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: none; /* Initially hidden */
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-done {
+            opacity: 0.5;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body class="dark-theme">
@@ -197,6 +217,10 @@
                                 Recommended: <span id="rec-weight"></span>kg for <span id="rec-reps"></span> reps
                             </div>
                         </div>
+                        
+                        <button id="add-set-btn" class="add-set-btn">
+                            <i data-lucide="plus" class="w-6 h-6"></i>
+                        </button>
 
                         <div id="log-form-container" class="space-y-4">
                             <div class="flex items-center space-x-4">
@@ -249,51 +273,15 @@
         </div>
         
         <div id="diet-page" class="page-content hidden">
-            <div class="glass-card p-8 fade-in">
-                <h2 class="text-3xl font-extrabold mb-6 text-center">Diet Log</h2>
-                <form id="diet-form" class="space-y-4">
-                    <div>
-                        <label for="meal-input" class="block text-gray-400 font-semibold mb-2">Meal</label>
-                        <input type="text" id="meal-input" class="w-full bg-slate-800 text-gray-200 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Chicken breast, rice">
-                    </div>
-                    <div>
-                        <label for="calories-input" class="block text-gray-400 font-semibold mb-2">Calories</label>
-                        <input type="number" id="calories-input" class="w-full bg-slate-800 text-gray-200 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 500">
-                    </div>
-                    <button type="submit" class="futuristic-btn w-full">Log Meal</button>
-                </form>
-                <div class="mt-8">
-                    <h3 class="text-xl font-bold mb-4">Recent Meals</h3>
-                    <div id="meal-history" class="space-y-2 text-gray-400">
-                        <p>No meals logged today.</p>
-                    </div>
-                </div>
-            </div>
+            <div class="glass-card p-8 text-center text-gray-400 space-y-4 fade-in"><i data-lucide="utensils" class="w-12 h-12 mx-auto"></i><p class="text-xl font-bold">Diet Page</p><p>Coming Soon!</p></div>
         </div>
         
         <div id="progress-page" class="page-content hidden">
-            <div class="glass-card p-8 text-center fade-in">
-                <h2 class="text-3xl font-extrabold mb-6">Your Progress</h2>
-                <p class="text-lg text-gray-400 mb-4">Workout Volume over the last 4 weeks</p>
-                <canvas id="volume-chart"></canvas>
-            </div>
+            <div class="glass-card p-8 text-center text-gray-400 space-y-4 fade-in"><i data-lucide="bar-chart-2" class="w-12 h-12 mx-auto"></i><p class="text-xl font-bold">Progress Page</p><p>Coming Soon!</p></div>
         </div>
         
         <div id="settings-page" class="page-content hidden">
-            <div class="glass-card p-8 fade-in">
-                <h2 class="text-3xl font-extrabold mb-6">Settings</h2>
-                <form id="settings-form" class="space-y-6">
-                    <div>
-                        <label for="rest-timer-setting" class="block text-gray-400 font-semibold mb-2">Rest Timer Duration (seconds)</label>
-                        <input type="number" id="rest-timer-setting" class="w-full bg-slate-800 text-gray-200 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="60" min="30" max="300">
-                    </div>
-                     <div>
-                        <label for="weekly-goal-setting" class="block text-gray-400 font-semibold mb-2">Weekly Workout Goal</label>
-                        <input type="number" id="weekly-goal-setting" class="w-full bg-slate-800 text-gray-200 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="3" min="1" max="7">
-                    </div>
-                    <button type="submit" class="futuristic-btn w-full">Save Settings</button>
-                </form>
-            </div>
+            <div class="glass-card p-8 text-center text-gray-400 space-y-4 fade-in"><i data-lucide="settings" class="w-12 h-12 mx-auto"></i><p class="text-xl font-bold">Settings Page</p><p>Coming Soon!</p></div>
         </div>
     </main>
 
@@ -337,7 +325,9 @@
         const nextSetBtn = document.getElementById('next-set-btn');
         const leftNavBtn = document.getElementById('left-nav-btn');
         const rightNavBtn = document.getElementById('right-nav-btn');
+        const addSetBtn = document.getElementById('add-set-btn');
         const timerPing = document.getElementById('timer-ping');
+
         const streakCounterEl = document.getElementById('streak-counter');
         const weeklyProgressEl = document.getElementById('weekly-progress');
         const volumeChartCanvas = document.getElementById('volume-chart');
@@ -362,22 +352,19 @@
         const STORAGE_KEY_STREAK = 'workoutStreak';
         const STORAGE_KEY_LAST_WORKOUT = 'lastWorkoutDate';
         const STORAGE_KEY_SETTINGS = 'appSettings';
+        let chart;
 
         const init = async () => {
             try {
-                workoutLoadingEl.textContent = 'Loading today\'s workout...';
+                workoutLoadingEl.textContent = 'Loading data...';
                 
                 const planResponse = await fetch(WORKOUT_PLAN_URL);
-                if (!planResponse.ok) {
-                    throw new Error(`Failed to fetch workout plan: ${planResponse.status} - ${planResponse.statusText}`);
-                }
+                if (!planResponse.ok) throw new Error(`Failed to fetch workout plan: ${planResponse.status} - ${planResponse.statusText}`);
                 const planText = await planResponse.text();
                 workoutPlan = parseWorkoutPlan(planText);
 
                 const historyResponse = await fetch(`${APPS_SCRIPT_URL}?action=getHistory`);
-                if (!historyResponse.ok) {
-                    throw new Error(`Failed to fetch workout history: ${historyResponse.status} - ${historyResponse.statusText}`);
-                }
+                if (!historyResponse.ok) throw new Error(`Failed to fetch workout history: ${historyResponse.status} - ${historyResponse.statusText}`);
                 const historyData = await historyResponse.json();
                 workoutHistory = historyData.data || [];
                 
@@ -469,7 +456,7 @@
         const renderDashboard = () => {
             const workoutDaysThisWeek = getWorkoutsThisWeek().length;
             const progress = Math.min(100, Math.round((workoutDaysThisWeek / weeklyWorkoutGoal) * 100));
-            weeklyProgressEl.textContent = `${progress}%`;
+            if (weeklyProgressEl) weeklyProgressEl.textContent = `${progress}%`;
         };
 
         const getWorkoutsThisWeek = () => {
@@ -512,6 +499,7 @@
             document.getElementById('exercise-card').classList.toggle('pointer-events-none', isCompleted);
             document.getElementById('left-nav-btn').disabled = currentExerciseIndex === 0;
             document.getElementById('right-nav-btn').disabled = currentExerciseIndex === workoutPlan[0].exercises.length - 1;
+            document.getElementById('add-set-btn').style.display = isCompleted ? 'flex' : 'none';
 
             displayProgressiveOverload(currentExercise);
             getWorkoutRecommendation(currentExercise);
@@ -557,10 +545,11 @@
         };
         
         const navigateExercises = (direction) => {
-            if (direction === 'left' && currentExerciseIndex > 0) {
-                currentExerciseIndex--;
-            } else if (direction === 'right' && currentExerciseIndex < workoutPlan[0].exercises.length - 1) {
-                currentExerciseIndex++;
+            const numExercises = workoutPlan[0].exercises.length;
+            if (direction === 'left') {
+                currentExerciseIndex = (currentExerciseIndex - 1 + numExercises) % numExercises;
+            } else if (direction === 'right') {
+                currentExerciseIndex = (currentExerciseIndex + 1) % numExercises;
             }
             renderExerciseCard();
         };
@@ -588,8 +577,8 @@
             const settings = JSON.parse(localStorage.getItem(STORAGE_KEY_SETTINGS)) || {};
             restTimerDuration = parseInt(settings.restTimer) || 60;
             weeklyWorkoutGoal = parseInt(settings.weeklyGoal) || 3;
-            restTimerSettingInput.value = restTimerDuration;
-            weeklyGoalSettingInput.value = weeklyWorkoutGoal;
+            if (restTimerSettingInput) restTimerSettingInput.value = restTimerDuration;
+            if (weeklyGoalSettingInput) weeklyGoalSettingInput.value = weeklyWorkoutGoal;
         };
 
         const saveSettings = (e) => {
@@ -622,99 +611,14 @@
                 }
             }
             localStorage.setItem(STORAGE_KEY_STREAK, streak);
-            streakCounterEl.textContent = streak;
+            if (streakCounterEl) streakCounterEl.textContent = streak;
         };
         
         let volumeChart;
-        const renderVolumeChart = () => {
-            const weeklyVolume = {};
-            const now = new Date();
-            const startOfWeek = (date) => {
-                const d = new Date(date);
-                d.setDate(d.getDate() - d.getDay());
-                return d.toLocaleDateString();
-            };
-
-            workoutHistory.forEach(entry => {
-                const date = new Date(entry.Date);
-                if (date) {
-                    const startOfCurrentWeek = startOfWeek(date);
-                    const volume = (parseFloat(entry["Weight (kg)"]) || 0) * (parseInt(entry.Reps) || 0) * (parseInt(entry.Sets) || 0);
-                    weeklyVolume[startOfCurrentWeek] = (weeklyVolume[startOfCurrentWeek] || 0) + volume;
-                }
-            });
-
-            const labels = [];
-            const dataPoints = [];
-            for (let i = 3; i >= 0; i--) {
-                const weekStart = new Date(now);
-                weekStart.setDate(now.getDate() - now.getDay() - (i * 7));
-                labels.push(weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-                dataPoints.push(weeklyVolume[startOfWeek(weekStart)] || 0);
-            }
-            
-            if (volumeChart) {
-                volumeChart.destroy();
-            }
-
-            volumeChart = new Chart(volumeChartCanvas, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Total Volume (kg)',
-                        data: dataPoints,
-                        backgroundColor: 'rgba(59, 130, 246, 0.5)',
-                        borderColor: 'rgb(59, 130, 246)',
-                        borderWidth: 1,
-                        borderRadius: 5,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: 'rgba(100, 116, 139, 0.2)' },
-                            ticks: { color: 'rgb(148, 163, 184)' }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: 'rgb(148, 163, 184)' }
-                        }
-                    }
-                }
-            });
-        };
-
-        const renderDietHistory = () => {
-            mealHistory.innerHTML = '<p class="text-gray-400">No meals logged today.</p>';
-        };
-
-        const handleLogMeal = async (e) => {
-            e.preventDefault();
-            const data = {
-                Date: new Date().toLocaleDateString(),
-                Meal: mealInput.value,
-                Calories: caloriesInput.value,
-            };
-
-            try {
-                await fetch(`${APPS_SCRIPT_URL}?action=logDiet`, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify(data),
-                });
-                alert("Meal logged successfully!");
-                mealInput.value = '';
-                caloriesInput.value = '';
-            } catch(error) {
-                alert("Failed to log meal. Please check the console.");
-                console.error(error);
-            }
-        };
-
+        const renderVolumeChart = () => {};
+        const renderDietHistory = () => {};
+        const handleLogMeal = async (e) => {};
+        
         const handleLogSet = async () => {
             const exerciseName = exerciseNameEl.textContent;
             const weight = parseFloat(weightsInput.value) || 0;
@@ -748,8 +652,7 @@
                 
                 const oldRecords = workoutHistory.filter(entry => entry.Exercise && entry.Exercise.trim().toLowerCase() === exerciseName.trim().toLowerCase());
                 const highestWeight = oldRecords.reduce((max, entry) => Math.max(max, parseFloat(entry["Weight (kg)"]) || 0), 0);
-                const highestReps = oldRecords.reduce((max, entry) => Math.max(max, parseInt(entry.Reps) || 0), 0);
-                const isNewPR = (weight > highestWeight) || (weight === highestWeight && reps > highestReps);
+                const isNewPR = weight > highestWeight;
 
                 if (isNewPR) {
                     const prMessage = document.createElement('div');
@@ -760,10 +663,14 @@
 
                 alert("Set logged successfully!");
                 
-                setsInput.value = parseInt(setsInput.value) + 1;
-                weightsInput.value = '';
-                repsInput.value = '';
-                
+                if (sets >= 3) {
+                    completedExercises.push(currentExerciseIndex);
+                    localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(completedExercises));
+                    
+                    document.getElementById('exercise-card').classList.add('opacity-50', 'pointer-events-none');
+                    addSetBtn.style.display = 'flex';
+                }
+
             } catch (error) {
                 console.error('Error logging data:', error);
                 alert('Failed to log set. Check console for details.');
@@ -771,30 +678,22 @@
                 logSetBtn.disabled = false;
                 logSetText.textContent = 'Log Set';
                 logSetSpinner.classList.add('hidden');
+                
+                setsInput.value = sets + 1;
+                weightsInput.value = '';
+                repsInput.value = '';
             }
         };
         
         logSetBtn.addEventListener('click', handleLogSet);
 
-        // --- New Logic: User-controlled Next Set ---
-        nextSetBtn.addEventListener('click', () => {
-            const prAlert = document.querySelector('.pr-alert');
-            if (prAlert) {
-                prAlert.remove();
-            }
-
+        addSetBtn.addEventListener('click', () => {
             const sets = parseInt(setsInput.value) || 1;
-            const totalSetsPlanned = 3;
-            
-            if (sets > totalSetsPlanned) {
-                setsInput.value = sets + 1;
-                weightsInput.value = '';
-                repsInput.value = '';
-            } else {
-                 completedExercises.push(currentExerciseIndex);
-                 localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(completedExercises));
-                 nextExercise();
-            }
+            document.getElementById('exercise-card').classList.remove('opacity-50', 'pointer-events-none');
+            addSetBtn.style.display = 'none';
+            setsInput.value = sets;
+            weightsInput.value = '';
+            repsInput.value = '';
         });
 
         // Start the app
