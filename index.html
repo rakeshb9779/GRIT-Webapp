@@ -110,15 +110,6 @@
             animation: fadeIn 0.5s ease-out forwards;
         }
 
-        .pr-alert {
-            animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        
         .log-set-btn.loading {
             background: #4b5563;
             cursor: not-allowed;
@@ -151,10 +142,10 @@
             align-items: center;
             justify-content: center;
         }
-
+        
         .card-done {
             opacity: 0.5;
-            pointer-events: none;
+            transition: opacity 0.3s ease-in-out;
         }
         
     </style>
@@ -665,7 +656,7 @@
                 const isNewPR = weight > highestWeight;
 
                 if (isNewPR) {
-                     Swal.fire({
+                    Swal.fire({
                         title: 'New Personal Record! 🎉',
                         text: `You lifted ${weight}kg, your new personal best!`,
                         icon: 'success'
@@ -697,4 +688,33 @@
         logSetBtn.addEventListener('click', handleLogSet);
 
         addSetBtn.addEventListener('click', () => {
-            document
+            document.getElementById('exercise-card').classList.remove('card-done');
+            addSetBtn.style.display = 'none';
+        });
+
+        endSessionBtn.addEventListener('click', () => {
+             Swal.fire({
+                title: 'End Session?',
+                text: "Are you sure you want to end your workout? Your progress for today will be saved.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#34d399',
+                cancelButtonColor: '#ef4444',
+                confirmButtonText: 'Yes, end session!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Session Ended!',
+                        text: 'Your hard work has been logged. Great job!',
+                        icon: 'success'
+                    });
+                    showPage('dashboard');
+                }
+            });
+        });
+
+        // Start the app
+        init();
+    </script>
+</body>
+</html>
