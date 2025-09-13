@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workout Tracker </title>
+    <title>Workout Tracker Pro</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -109,7 +109,7 @@
         .fade-in {
             animation: fadeIn 0.5s ease-out forwards;
         }
-
+        
         .log-set-btn.loading {
             background: #4b5563;
             cursor: not-allowed;
@@ -142,9 +142,10 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .card-done {
             opacity: 0.5;
+            pointer-events: none;
             transition: opacity 0.3s ease-in-out;
         }
         
@@ -410,9 +411,9 @@
                 }
                 renderWorkoutPage();
             } else if (pageId === 'progress') {
-                renderVolumeChart();
+                //renderVolumeChart();
             } else if (pageId === 'diet') {
-                 renderDietHistory();
+                 //renderDietHistory();
             }
         };
 
@@ -590,7 +591,14 @@
                 restTimerDuration = newDuration;
                 weeklyWorkoutGoal = newGoal;
                 localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify({ restTimer: newDuration, weeklyGoal: newGoal }));
-                Swal.fire('Saved!', 'Your settings have been saved.', 'success');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Saved!',
+                    text: 'Your settings have been saved.',
+                    showConfirmButton: false,
+                    timer: 1500,
+                    timerProgressBar: true
+                });
             } else {
                 Swal.fire('Error!', 'Please enter a valid rest timer (30-300s) and weekly goal (1-7 workouts).', 'error');
             }
@@ -662,11 +670,30 @@
                         icon: 'success'
                     });
                 } else {
-                    Swal.fire('Success', 'Set logged successfully!', 'success');
+                    Swal.fire({
+                        title: 'Set logged!',
+                        html: `What's next?`,
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonText: 'Start Rest Timer',
+                        cancelButtonText: 'Log Next Set'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            startRestTimer(restTimerDuration);
+                        } else {
+                            // User wants to log next set without a timer
+                            setsInput.value = parseInt(setsInput.value) + 1;
+                            weightsInput.value = '';
+                            repsInput.value = '';
+                        }
+                    });
                 }
                 
                 const totalSetsPlanned = 3;
-                if (sets >= totalSetsPlanned) {
+                if (sets >= totalSetsPlanned && !completedExercises.includes(currentExerciseIndex)) {
+                    completedExercises.push(currentExerciseIndex);
+                    localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(completedExercises));
+                    
                     document.getElementById('exercise-card').classList.add('card-done');
                     addSetBtn.style.display = 'flex';
                 }
@@ -712,6 +739,42 @@
                 }
             });
         });
+
+        let timerInterval;
+        const startRestTimer = (seconds) => {
+            logFormContainer.style.display = 'none';
+            restTimerUI.style.display = 'block';
+            let remaining = seconds;
+            timerDisplay.textContent = `0:${remaining.toString().padStart(2, '0')}`;
+
+            timerInterval = setInterval(() => {
+                remaining--;
+                timerDisplay.textContent = `0:${remaining.toString().padStart(2, '0')}`;
+
+                if (remaining <= 0) {
+                    clearInterval(timerInterval);
+                    timerPing.play();
+                    Swal.fire({
+                        title: 'Time\'s Up!',
+                        text: 'Rest is over. Get ready for your next set!',
+                        icon: 'info',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true
+                    });
+                    logFormContainer.style.display = 'block';
+                    restTimerUI.style.display = 'none';
+                }
+            }, 1000);
+        };
+        
+        nextSetBtn.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            logFormContainer.style.display = 'block';
+            restTimerUI.style.display = 'none';
+            // Logic for moving to the next set is handled within the main logSet function
+        });
+
 
         // Start the app
         init();
