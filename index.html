@@ -109,6 +109,15 @@
         .fade-in {
             animation: fadeIn 0.5s ease-out forwards;
         }
+
+        .pr-alert {
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
         
         .log-set-btn.loading {
             background: #4b5563;
@@ -263,15 +272,27 @@
         </div>
         
         <div id="diet-page" class="page-content hidden">
-            <div class="glass-card p-8 text-center text-gray-400 space-y-4 fade-in"><i data-lucide="utensils" class="w-12 h-12 mx-auto"></i><p class="text-xl font-bold">Diet Page</p><p>Coming Soon!</p></div>
+            <div class="glass-card p-8 text-center text-gray-400 space-y-4 fade-in">
+                <i data-lucide="utensils" class="w-12 h-12 mx-auto"></i>
+                <p class="text-xl font-bold">Diet Page</p>
+                <p>Coming Soon!</p>
+            </div>
         </div>
         
         <div id="progress-page" class="page-content hidden">
-            <div class="glass-card p-8 text-center text-gray-400 space-y-4 fade-in"><i data-lucide="bar-chart-2" class="w-12 h-12 mx-auto"></i><p class="text-xl font-bold">Progress Page</p><p>Coming Soon!</p></div>
+            <div class="glass-card p-8 text-center text-gray-400 space-y-4 fade-in">
+                <i data-lucide="bar-chart-2" class="w-12 h-12 mx-auto"></i>
+                <p class="text-xl font-bold">Progress Page</p>
+                <p>Coming Soon!</p>
+            </div>
         </div>
         
         <div id="settings-page" class="page-content hidden">
-            <div class="glass-card p-8 text-center text-gray-400 space-y-4 fade-in"><i data-lucide="settings" class="w-12 h-12 mx-auto"></i><p class="text-xl font-bold">Settings Page</p><p>Coming Soon!</p></div>
+            <div class="glass-card p-8 text-center text-gray-400 space-y-4 fade-in">
+                <i data-lucide="settings" class="w-12 h-12 mx-auto"></i>
+                <p class="text-xl font-bold">Settings Page</p>
+                <p>Coming Soon!</p>
+            </div>
         </div>
     </main>
 
@@ -486,8 +507,7 @@
             exerciseNoteEl.textContent = currentWorkout.note || '';
 
             const isCompleted = completedExercises.includes(currentExerciseIndex);
-            document.getElementById('exercise-card').classList.toggle('opacity-50', isCompleted);
-            document.getElementById('exercise-card').classList.toggle('pointer-events-none', isCompleted);
+            document.getElementById('exercise-card').classList.toggle('card-done', isCompleted);
             document.getElementById('add-set-btn').style.display = isCompleted ? 'flex' : 'none';
 
             displayProgressiveOverload(currentExercise);
@@ -633,10 +653,11 @@
             };
             
             try {
+                const payload = { action: 'logWorkout', data: data };
                 await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
-                    body: JSON.stringify(data),
+                    body: JSON.stringify(payload),
                 });
                 
                 const oldRecords = workoutHistory.filter(entry => entry.Exercise && entry.Exercise.trim().toLowerCase() === exerciseName.trim().toLowerCase());
@@ -644,7 +665,7 @@
                 const isNewPR = weight > highestWeight;
 
                 if (isNewPR) {
-                    Swal.fire({
+                     Swal.fire({
                         title: 'New Personal Record! 🎉',
                         text: `You lifted ${weight}kg, your new personal best!`,
                         icon: 'success'
@@ -653,8 +674,9 @@
                     Swal.fire('Success', 'Set logged successfully!', 'success');
                 }
                 
-                if (sets >= 3) {
-                    document.getElementById('exercise-card').classList.add('opacity-50', 'pointer-events-none');
+                const totalSetsPlanned = 3;
+                if (sets >= totalSetsPlanned) {
+                    document.getElementById('exercise-card').classList.add('card-done');
                     addSetBtn.style.display = 'flex';
                 }
 
@@ -675,38 +697,4 @@
         logSetBtn.addEventListener('click', handleLogSet);
 
         addSetBtn.addEventListener('click', () => {
-            document.getElementById('exercise-card').classList.remove('opacity-50', 'pointer-events-none');
-            addSetBtn.style.display = 'none';
-            const currentSets = parseInt(setsInput.value) || 1;
-            setsInput.value = currentSets;
-            weightsInput.value = '';
-            repsInput.value = '';
-        });
-
-        endSessionBtn.addEventListener('click', () => {
-             Swal.fire({
-                title: 'End Session?',
-                text: "Are you sure you want to end your workout? Your progress for today will be saved.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#34d399',
-                cancelButtonColor: '#ef4444',
-                confirmButtonText: 'Yes, end session!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({
-                        title: 'Session Ended!',
-                        text: 'Your hard work has been logged. Great job!',
-                        icon: 'success'
-                    });
-                    // Log session-end logic here if needed
-                    showPage('dashboard');
-                }
-            });
-        });
-
-        // Start the app
-        init();
-    </script>
-</body>
-</html>
+            document
