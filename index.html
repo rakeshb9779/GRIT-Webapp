@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workout Tracker </title>
+    <title>Workout Tracker Pro</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -121,7 +121,21 @@
             background: #4b5563;
             cursor: not-allowed;
         }
-        
+
+        .nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.3);
+            color: white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
     </style>
 </head>
 <body class="dark-theme">
@@ -129,6 +143,7 @@
         <div id="dashboard-page" class="page-content hidden">
             <div class="glass-card p-8 text-center fade-in">
                 <h2 class="text-3xl font-extrabold mb-4">Welcome Back!</h2>
+                
                 <div class="flex justify-around items-center mb-6">
                     <div class="text-center">
                         <p id="streak-counter" class="text-3xl font-bold text-yellow-400">0</p>
@@ -139,6 +154,7 @@
                         <p class="text-sm text-gray-400">Weekly Goal</p>
                     </div>
                 </div>
+                
                 <p class="text-lg text-gray-400 mb-8">Ready to start the session?</p>
                 <button id="start-session-btn" class="futuristic-btn py-4 w-full">Start Today's Session</button>
             </div>
@@ -151,7 +167,15 @@
             </div>
 
             <div id="workout-ui" class="hidden fade-in">
-                <div class="glass-card p-6 md:p-8 space-y-6">
+                <div class="glass-card p-6 md:p-8 space-y-6 relative">
+                    <button id="left-nav-btn" class="nav-button -left-5">
+                        <i data-lucide="chevron-left" class="w-6 h-6"></i>
+                    </button>
+
+                    <button id="right-nav-btn" class="nav-button -right-5">
+                        <i data-lucide="chevron-right" class="w-6 h-6"></i>
+                    </button>
+
                     <div class="flex justify-between items-center text-gray-400 font-semibold mb-4">
                         <span id="day-of-week"></span>
                         <span id="exercise-counter"></span>
@@ -314,6 +338,8 @@
         const restTimerUI = document.getElementById('rest-timer-ui');
         const timerDisplay = document.getElementById('timer-display');
         const nextSetBtn = document.getElementById('next-set-btn');
+        const leftNavBtn = document.getElementById('left-nav-btn');
+        const rightNavBtn = document.getElementById('right-nav-btn');
         const timerPing = document.getElementById('timer-ping');
 
         // Dashboard Elements
@@ -345,6 +371,8 @@
         let sessionVolumeLifted = 0;
         let restTimerDuration = 60;
         let weeklyWorkoutGoal = 3;
+        let isFetching = false;
+
 
         // --- Local Storage Keys ---
         const STORAGE_KEY_COMPLETED = 'completedExercises';
@@ -357,34 +385,28 @@
 
         const init = async () => {
             try {
-                // Pre-fetch all data as soon as the app loads
+                workoutLoadingEl.textContent = 'Loading today\'s workout...';
+                
                 const planResponse = await fetch(WORKOUT_PLAN_URL);
-                if (!planResponse.ok) {
-                    throw new Error(`Failed to fetch workout plan: ${planResponse.status} - ${planResponse.statusText}`);
-                }
+                if (!planResponse.ok) throw new Error(`Failed to fetch workout plan: ${planResponse.status} - ${planResponse.statusText}`);
                 const planText = await planResponse.text();
                 workoutPlan = parseWorkoutPlan(planText);
 
                 const historyResponse = await fetch(`${APPS_SCRIPT_URL}?action=getHistory`);
-                if (!historyResponse.ok) {
-                    throw new Error(`Failed to fetch workout history: ${historyResponse.status} - ${historyResponse.statusText}`);
-                }
+                if (!historyResponse.ok) throw new Error(`Failed to fetch workout history: ${historyResponse.status} - ${historyResponse.statusText}`);
                 const historyData = await historyResponse.json();
                 workoutHistory = historyData.data || [];
                 
-                // Initialize all app states
                 loadSettings();
                 loadCompletedExercises();
                 loadWorkoutStreak();
 
-                // Set up initial view
+                renderDashboard();
                 const initialPage = window.location.hash.substring(1) || 'dashboard';
                 showPage(initialPage);
-                renderDashboard();
-
+                
             } catch (error) {
                 console.error("Critical error during data fetch:", error);
-                // Display error message prominently on the screen
                 const errorMessageEl = document.createElement('div');
                 errorMessageEl.className = 'glass-card p-6 md:p-8 space-y-4 text-center mt-8 text-red-400';
                 errorMessageEl.innerHTML = `<i data-lucide="alert-triangle" class="w-12 h-12 mx-auto"></i><p>Error loading data: ${error.message}.</p><p class="text-sm text-gray-500">Please check your sheet URLs and Apps Script deployment.</p>`;
@@ -550,20 +572,18 @@
             }
         };
 
-        const nextExercise = () => {
-            completedExercises.push(currentExerciseIndex);
-            localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(completedExercises));
-            
-            setTimeout(() => {
-                if (currentExerciseIndex < workoutPlan[0].exercises.length - 1) {
-                    currentExerciseIndex++;
-                    renderExerciseCard();
-                } else {
-                    alert("Workout session completed!");
-                }
-            }, 500); 
+        const navigateExercises = (direction) => {
+            if (direction === 'left' && currentExerciseIndex > 0) {
+                currentExerciseIndex--;
+            } else if (direction === 'right' && currentExerciseIndex < workoutPlan[0].exercises.length - 1) {
+                currentExerciseIndex++;
+            }
+            renderExerciseCard();
         };
-        
+
+        leftNavBtn.addEventListener('click', () => navigateExercises('left'));
+        rightNavBtn.addEventListener('click', () => navigateExercises('right'));
+
         const loadCompletedExercises = () => {
             const today = new Date().toLocaleDateString();
             const lastSessionDate = localStorage.getItem(STORAGE_KEY_LAST_SESSION);
@@ -635,7 +655,20 @@
                     body: JSON.stringify(data),
                 });
                 
-                alert("Set logged successfully! Click 'Next Set' to continue.");
+                // Show PR alert (if any)
+                const oldRecords = workoutHistory.filter(entry => entry.Exercise && entry.Exercise.trim().toLowerCase() === exerciseName.trim().toLowerCase());
+                const highestWeight = oldRecords.reduce((max, entry) => Math.max(max, parseFloat(entry["Weight (kg)"]) || 0), 0);
+                const highestReps = oldRecords.reduce((max, entry) => Math.max(max, parseInt(entry.Reps) || 0), 0);
+                const isNewPR = (weight > highestWeight) || (weight === highestWeight && reps > highestReps);
+
+                if (isNewPR) {
+                    const prMessage = document.createElement('div');
+                    prMessage.className = 'pr-alert mt-4 p-2 bg-yellow-500/20 text-yellow-300 rounded-lg font-bold text-center';
+                    prMessage.textContent = '🎉 New Personal Record!';
+                    logFormContainer.appendChild(prMessage);
+                }
+
+                alert("Set logged successfully!");
                 
             } catch (error) {
                 console.error('Error logging data:', error);
@@ -644,25 +677,66 @@
                 logSetBtn.disabled = false;
                 logSetText.textContent = 'Log Set';
                 logSetSpinner.classList.add('hidden');
+                
+                // Auto-increment sets for the next set
+                setsInput.value = parseInt(setsInput.value) + 1;
+                weightsInput.value = '';
+                repsInput.value = '';
             }
         };
         
         logSetBtn.addEventListener('click', handleLogSet);
 
+        // --- New Logic: User-controlled Next Set ---
         nextSetBtn.addEventListener('click', () => {
+            // Remove PR alerts
+            const prAlert = document.querySelector('.pr-alert');
+            if (prAlert) {
+                prAlert.remove();
+            }
+
+            // Move to the next exercise or next set
             const sets = parseInt(setsInput.value) || 1;
-            if (sets >= 3) {
-                 nextExercise();
-            } else {
+            const totalSetsPlanned = 3; // Assuming 3 sets is the default
+            
+            if (sets > totalSetsPlanned) {
+                // If user does more than 3 sets, we just reset the form for another set
                 setsInput.value = sets + 1;
                 weightsInput.value = '';
                 repsInput.value = '';
-                
-                const currentExercise = workoutPlan[0].exercises[currentExerciseIndex];
-                getWorkoutRecommendation(currentExercise);
+            } else {
+                // Otherwise, move to next exercise
+                 completedExercises.push(currentExerciseIndex);
+                 localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(completedExercises));
+                 nextExercise();
             }
         });
 
+        const handleLogMeal = async (e) => {
+            e.preventDefault();
+            const data = {
+                Date: new Date().toLocaleDateString(),
+                Meal: mealInput.value,
+                Calories: caloriesInput.value,
+            };
+
+            try {
+                await fetch(`${APPS_SCRIPT_URL}?action=logDiet`, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(data),
+                });
+                alert("Meal logged successfully!");
+                mealInput.value = '';
+                caloriesInput.value = '';
+            } catch(error) {
+                alert("Failed to log meal. Please check the console.");
+                console.error(error);
+            }
+        };
+
+        dietForm.addEventListener('submit', handleLogMeal);
+        settingsForm.addEventListener('submit', saveSettings);
 
         // Start the app
         init();
