@@ -1,12 +1,10 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workout Tracker </title>
+    <title>Workout Tracker Pro</title>
 
-    <!-- Tailwind CSS for modern styling and responsiveness -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -147,7 +145,7 @@
             border-radius: 50%;
             width: 40px;
             height: 40px;
-            display: none; /* Initially hidden */
+            display: none;
             align-items: center;
             justify-content: center;
         }
@@ -156,6 +154,7 @@
             opacity: 0.5;
             pointer-events: none;
         }
+        
     </style>
 </head>
 <body class="dark-theme">
@@ -497,8 +496,6 @@
             const isCompleted = completedExercises.includes(currentExerciseIndex);
             document.getElementById('exercise-card').classList.toggle('opacity-50', isCompleted);
             document.getElementById('exercise-card').classList.toggle('pointer-events-none', isCompleted);
-            document.getElementById('left-nav-btn').disabled = currentExerciseIndex === 0;
-            document.getElementById('right-nav-btn').disabled = currentExerciseIndex === workoutPlan[0].exercises.length - 1;
             document.getElementById('add-set-btn').style.display = isCompleted ? 'flex' : 'none';
 
             displayProgressiveOverload(currentExercise);
@@ -679,7 +676,7 @@
                 logSetText.textContent = 'Log Set';
                 logSetSpinner.classList.add('hidden');
                 
-                setsInput.value = sets + 1;
+                setsInput.value = parseInt(setsInput.value) + 1;
                 weightsInput.value = '';
                 repsInput.value = '';
             }
@@ -688,15 +685,14 @@
         logSetBtn.addEventListener('click', handleLogSet);
 
         addSetBtn.addEventListener('click', () => {
-            const sets = parseInt(setsInput.value) || 1;
             document.getElementById('exercise-card').classList.remove('opacity-50', 'pointer-events-none');
             addSetBtn.style.display = 'none';
-            setsInput.value = sets;
+            const currentSets = parseInt(setsInput.value) || 1;
+            setsInput.value = currentSets;
             weightsInput.value = '';
             repsInput.value = '';
         });
-
-        // Start the app
+        
         init();
     </script>
 </body>
