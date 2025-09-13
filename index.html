@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         :root {
@@ -55,6 +56,7 @@
             border: 1px solid var(--card-border-dark);
             background-color: var(--card-bg-dark);
             box-shadow: 0 8px 32px rgba(var(--primary-rgb), 0.1);
+            transition: opacity 0.3s ease-in-out;
         }
         
         .futuristic-btn {
@@ -106,15 +108,6 @@
         }
         .fade-in {
             animation: fadeIn 0.5s ease-out forwards;
-        }
-
-        .pr-alert {
-            animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
         }
         
         .log-set-btn.loading {
@@ -186,7 +179,7 @@
             </div>
 
             <div id="workout-ui" class="hidden fade-in">
-                <div class="glass-card p-6 md:p-8 space-y-6 relative">
+                <div class="relative">
                     <button id="left-nav-btn" class="nav-button -left-5">
                         <i data-lucide="chevron-left" class="w-6 h-6"></i>
                     </button>
@@ -194,58 +187,56 @@
                     <button id="right-nav-btn" class="nav-button -right-5">
                         <i data-lucide="chevron-right" class="w-6 h-6"></i>
                     </button>
-
-                    <div class="flex justify-between items-center text-gray-400 font-semibold mb-4">
-                        <span id="day-of-week"></span>
-                        <span id="exercise-counter"></span>
-                    </div>
-
-                    <div id="exercise-card">
-                        <h3 id="exercise-name" class="text-3xl md:text-4xl font-bold mb-2"></h3>
-                        <p id="exercise-note" class="text-sm md:text-base text-gray-500 mb-6"></p>
-
-                        <div id="history-section" class="mb-6 space-y-2 text-sm text-gray-400">
-                            <h4 class="font-semibold text-gray-300">Last 3 Workouts:</h4>
-                            <div id="history-list" class="space-y-1">
-                                <p class="text-gray-500">No recent history found.</p>
-                            </div>
-                        </div>
-                        
-                        <div id="recommendation-section" class="text-center mb-6 hidden">
-                            <div class="inline-block px-4 py-2 bg-blue-500/20 text-blue-300 rounded-full font-semibold text-sm">
-                                Recommended: <span id="rec-weight"></span>kg for <span id="rec-reps"></span> reps
-                            </div>
-                        </div>
-                        
+                    
+                    <div id="exercise-card" class="glass-card p-6 md:p-8 space-y-6">
                         <button id="add-set-btn" class="add-set-btn">
                             <i data-lucide="plus" class="w-6 h-6"></i>
                         </button>
+                        <div class="flex justify-between items-center text-gray-400 font-semibold mb-4">
+                            <span id="day-of-week"></span>
+                            <span id="exercise-counter"></span>
+                        </div>
 
-                        <div id="log-form-container" class="space-y-4">
-                            <div class="flex items-center space-x-4">
-                                <label class="text-gray-400 font-semibold w-16">Sets</label>
-                                <input type="number" id="sets-input" class="w-full bg-slate-800 text-gray-200 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="1" min="1">
+                        <div id="exercise-content">
+                            <h3 id="exercise-name" class="text-3xl md:text-4xl font-bold mb-2"></h3>
+                            <p id="exercise-note" class="text-sm md:text-base text-gray-500 mb-6"></p>
+
+                            <div id="history-section" class="mb-6 space-y-2 text-sm text-gray-400">
+                                <h4 class="font-semibold text-gray-300">Last 3 Workouts:</h4>
+                                <div id="history-list" class="space-y-1">
+                                    <p class="text-gray-500">No recent history found.</p>
+                                </div>
                             </div>
-                            <div class="flex items-center space-x-4">
-                                <label class="text-gray-400 font-semibold w-16">Weight</label>
-                                <input type="number" id="weights-input" class="w-full bg-slate-800 text-gray-200 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 20">
+                            
+                            <div id="recommendation-section" class="text-center mb-6 hidden">
+                                <div class="inline-block px-4 py-2 bg-blue-500/20 text-blue-300 rounded-full font-semibold text-sm">
+                                    Recommended: <span id="rec-weight"></span>kg for <span id="rec-reps"></span> reps
+                                </div>
                             </div>
-                            <div class="flex items-center space-x-4">
-                                <label class="text-gray-400 font-semibold w-16">Reps</label>
-                                <input type="number" id="reps-input" class="w-full bg-slate-800 text-gray-200 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 10">
+
+                            <div id="log-form-container" class="space-y-4">
+                                <div class="flex items-center space-x-4">
+                                    <label class="text-gray-400 font-semibold w-16">Sets</label>
+                                    <input type="number" id="sets-input" class="w-full bg-slate-800 text-gray-200 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="1" min="1">
+                                </div>
+                                <div class="flex items-center space-x-4">
+                                    <label class="text-gray-400 font-semibold w-16">Weight</label>
+                                    <input type="number" id="weights-input" class="w-full bg-slate-800 text-gray-200 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 20">
+                                </div>
+                                <div class="flex items-center space-x-4">
+                                    <label class="text-gray-400 font-semibold w-16">Reps</label>
+                                    <input type="number" id="reps-input" class="w-full bg-slate-800 text-gray-200 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 10">
+                                </div>
+                                <button id="log-set-btn" class="futuristic-btn futuristic-btn-secondary w-full py-4 mt-4 flex items-center justify-center space-x-2">
+                                    <span id="log-set-text">Log Set</span>
+                                    <div id="log-set-spinner" class="hidden animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                                </button>
                             </div>
-                            <button id="log-set-btn" class="futuristic-btn futuristic-btn-secondary w-full py-4 mt-4 flex items-center justify-center space-x-2">
-                                <span id="log-set-text">Log Set</span>
-                                <div id="log-set-spinner" class="hidden animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
-                            </button>
                         </div>
                     </div>
                 </div>
-
-                <div id="rest-timer-ui" class="glass-card p-8 mt-6 hidden text-center space-y-6">
-                    <h3 class="text-2xl font-bold">Resting...</h3>
-                    <div id="timer-display" class="timer-container">0:60</div>
-                    <button id="next-set-btn" class="futuristic-btn w-full">Next Set</button>
+                 <div class="mt-8 flex justify-center">
+                    <button id="end-session-btn" class="futuristic-btn py-3 px-6 text-sm">End Session</button>
                 </div>
             </div>
         </div>
@@ -325,6 +316,7 @@
         const leftNavBtn = document.getElementById('left-nav-btn');
         const rightNavBtn = document.getElementById('right-nav-btn');
         const addSetBtn = document.getElementById('add-set-btn');
+        const endSessionBtn = document.getElementById('end-session-btn');
         const timerPing = document.getElementById('timer-ping');
 
         const streakCounterEl = document.getElementById('streak-counter');
@@ -587,9 +579,9 @@
                 restTimerDuration = newDuration;
                 weeklyWorkoutGoal = newGoal;
                 localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify({ restTimer: newDuration, weeklyGoal: newGoal }));
-                alert("Settings saved!");
+                Swal.fire('Saved!', 'Your settings have been saved.', 'success');
             } else {
-                alert("Please enter a valid rest timer (30-300s) and weekly goal (1-7 workouts).");
+                Swal.fire('Error!', 'Please enter a valid rest timer (30-300s) and weekly goal (1-7 workouts).', 'error');
             }
         };
         
@@ -623,7 +615,7 @@
             const sets = parseInt(setsInput.value) || 1;
 
             if (weight === 0 || reps === 0) {
-                 alert("Please enter a valid weight and number of reps.");
+                 Swal.fire('Error', 'Please enter a valid weight and number of reps.', 'error');
                 return;
             }
 
@@ -652,25 +644,23 @@
                 const isNewPR = weight > highestWeight;
 
                 if (isNewPR) {
-                    const prMessage = document.createElement('div');
-                    prMessage.className = 'pr-alert mt-4 p-2 bg-yellow-500/20 text-yellow-300 rounded-lg font-bold text-center';
-                    prMessage.textContent = '🎉 New Personal Record!';
-                    logFormContainer.appendChild(prMessage);
+                    Swal.fire({
+                        title: 'New Personal Record! 🎉',
+                        text: `You lifted ${weight}kg, your new personal best!`,
+                        icon: 'success'
+                    });
+                } else {
+                    Swal.fire('Success', 'Set logged successfully!', 'success');
                 }
-
-                alert("Set logged successfully!");
                 
                 if (sets >= 3) {
-                    completedExercises.push(currentExerciseIndex);
-                    localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(completedExercises));
-                    
                     document.getElementById('exercise-card').classList.add('opacity-50', 'pointer-events-none');
                     addSetBtn.style.display = 'flex';
                 }
 
             } catch (error) {
                 console.error('Error logging data:', error);
-                alert('Failed to log set. Check console for details.');
+                Swal.fire('Error', 'Failed to log set. Check console for details.', 'error');
             } finally {
                 logSetBtn.disabled = false;
                 logSetText.textContent = 'Log Set';
@@ -692,7 +682,30 @@
             weightsInput.value = '';
             repsInput.value = '';
         });
-        
+
+        endSessionBtn.addEventListener('click', () => {
+             Swal.fire({
+                title: 'End Session?',
+                text: "Are you sure you want to end your workout? Your progress for today will be saved.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#34d399',
+                cancelButtonColor: '#ef4444',
+                confirmButtonText: 'Yes, end session!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Session Ended!',
+                        text: 'Your hard work has been logged. Great job!',
+                        icon: 'success'
+                    });
+                    // Log session-end logic here if needed
+                    showPage('dashboard');
+                }
+            });
+        });
+
+        // Start the app
         init();
     </script>
 </body>
