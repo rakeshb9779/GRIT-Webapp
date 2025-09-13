@@ -310,14 +310,11 @@
     <audio id="timer-ping" src="https://assets.mixkit.co/sfx/preview/mixkit-positive-notification-390.mp3"></audio>
 
     <script>
-        // Initialize Lucide icons
         lucide.createIcons();
 
-        // --- Configuration Constants ---
         const WORKOUT_PLAN_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQiJvI_6Sskh-ei7zjY-8lFbUoFY-2n--zZQAgvnucn3WlJlrr5MFB93j5x9WKZY2pOW3UEjvB8sfY_/pub?output=csv&gid=1675295238";
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBvh6uogeuSdKEjaodMCbKpSA7qUqSY7d-XAZ_6y_L_C5eVZCWNegZQ54g4zv7ZSq0/exec";
 
-        // --- DOM Elements ---
         const pageContents = document.querySelectorAll('.page-content');
         const navLinks = document.querySelectorAll('.nav-item');
         const startSessionBtn = document.getElementById('start-session-btn');
@@ -341,27 +338,16 @@
         const leftNavBtn = document.getElementById('left-nav-btn');
         const rightNavBtn = document.getElementById('right-nav-btn');
         const timerPing = document.getElementById('timer-ping');
-
-        // Dashboard Elements
         const streakCounterEl = document.getElementById('streak-counter');
         const weeklyProgressEl = document.getElementById('weekly-progress');
-
-        // Progress Page Elements
         const volumeChartCanvas = document.getElementById('volume-chart');
-
-        // Settings Elements
         const settingsForm = document.getElementById('settings-form');
         const restTimerSettingInput = document.getElementById('rest-timer-setting');
         const weeklyGoalSettingInput = document.getElementById('weekly-goal-setting');
-
-        // Diet Page Elements
         const dietForm = document.getElementById('diet-form');
         const mealInput = document.getElementById('meal-input');
         const caloriesInput = document.getElementById('calories-input');
         const mealHistory = document.getElementById('meal-history');
-
-
-        // --- State Variables ---
         let workoutPlan = [];
         let completedExercises = [];
         let workoutHistory = [];
@@ -371,29 +357,27 @@
         let sessionVolumeLifted = 0;
         let restTimerDuration = 60;
         let weeklyWorkoutGoal = 3;
-        let isFetching = false;
-
-
-        // --- Local Storage Keys ---
         const STORAGE_KEY_COMPLETED = 'completedExercises';
         const STORAGE_KEY_LAST_SESSION = 'lastSessionDate';
         const STORAGE_KEY_STREAK = 'workoutStreak';
         const STORAGE_KEY_LAST_WORKOUT = 'lastWorkoutDate';
         const STORAGE_KEY_SETTINGS = 'appSettings';
 
-        // --- Core Functions ---
-
         const init = async () => {
             try {
                 workoutLoadingEl.textContent = 'Loading today\'s workout...';
                 
                 const planResponse = await fetch(WORKOUT_PLAN_URL);
-                if (!planResponse.ok) throw new Error(`Failed to fetch workout plan: ${planResponse.status} - ${planResponse.statusText}`);
+                if (!planResponse.ok) {
+                    throw new Error(`Failed to fetch workout plan: ${planResponse.status} - ${planResponse.statusText}`);
+                }
                 const planText = await planResponse.text();
                 workoutPlan = parseWorkoutPlan(planText);
 
                 const historyResponse = await fetch(`${APPS_SCRIPT_URL}?action=getHistory`);
-                if (!historyResponse.ok) throw new Error(`Failed to fetch workout history: ${historyResponse.status} - ${historyResponse.statusText}`);
+                if (!historyResponse.ok) {
+                    throw new Error(`Failed to fetch workout history: ${historyResponse.status} - ${historyResponse.statusText}`);
+                }
                 const historyData = await historyResponse.json();
                 workoutHistory = historyData.data || [];
                 
@@ -445,9 +429,7 @@
         navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 const pageId = link.dataset.page;
-                if (pageId !== 'placeholder') {
-                    showPage(pageId);
-                }
+                showPage(pageId);
             });
         });
 
@@ -528,6 +510,8 @@
             const isCompleted = completedExercises.includes(currentExerciseIndex);
             document.getElementById('exercise-card').classList.toggle('opacity-50', isCompleted);
             document.getElementById('exercise-card').classList.toggle('pointer-events-none', isCompleted);
+            document.getElementById('left-nav-btn').disabled = currentExerciseIndex === 0;
+            document.getElementById('right-nav-btn').disabled = currentExerciseIndex === workoutPlan[0].exercises.length - 1;
 
             displayProgressiveOverload(currentExercise);
             getWorkoutRecommendation(currentExercise);
@@ -571,7 +555,7 @@
                  document.getElementById('recommendation-section').classList.add('hidden');
             }
         };
-
+        
         const navigateExercises = (direction) => {
             if (direction === 'left' && currentExerciseIndex > 0) {
                 currentExerciseIndex--;
@@ -604,6 +588,23 @@
             const settings = JSON.parse(localStorage.getItem(STORAGE_KEY_SETTINGS)) || {};
             restTimerDuration = parseInt(settings.restTimer) || 60;
             weeklyWorkoutGoal = parseInt(settings.weeklyGoal) || 3;
+            restTimerSettingInput.value = restTimerDuration;
+            weeklyGoalSettingInput.value = weeklyWorkoutGoal;
+        };
+
+        const saveSettings = (e) => {
+            e.preventDefault();
+            const newDuration = parseInt(restTimerSettingInput.value);
+            const newGoal = parseInt(weeklyGoalSettingInput.value);
+            
+            if (newDuration >= 30 && newDuration <= 300 && newGoal >= 1 && newGoal <= 7) {
+                restTimerDuration = newDuration;
+                weeklyWorkoutGoal = newGoal;
+                localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify({ restTimer: newDuration, weeklyGoal: newGoal }));
+                alert("Settings saved!");
+            } else {
+                alert("Please enter a valid rest timer (30-300s) and weekly goal (1-7 workouts).");
+            }
         };
         
         const loadWorkoutStreak = () => {
@@ -622,6 +623,96 @@
             }
             localStorage.setItem(STORAGE_KEY_STREAK, streak);
             streakCounterEl.textContent = streak;
+        };
+        
+        let volumeChart;
+        const renderVolumeChart = () => {
+            const weeklyVolume = {};
+            const now = new Date();
+            const startOfWeek = (date) => {
+                const d = new Date(date);
+                d.setDate(d.getDate() - d.getDay());
+                return d.toLocaleDateString();
+            };
+
+            workoutHistory.forEach(entry => {
+                const date = new Date(entry.Date);
+                if (date) {
+                    const startOfCurrentWeek = startOfWeek(date);
+                    const volume = (parseFloat(entry["Weight (kg)"]) || 0) * (parseInt(entry.Reps) || 0) * (parseInt(entry.Sets) || 0);
+                    weeklyVolume[startOfCurrentWeek] = (weeklyVolume[startOfCurrentWeek] || 0) + volume;
+                }
+            });
+
+            const labels = [];
+            const dataPoints = [];
+            for (let i = 3; i >= 0; i--) {
+                const weekStart = new Date(now);
+                weekStart.setDate(now.getDate() - now.getDay() - (i * 7));
+                labels.push(weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                dataPoints.push(weeklyVolume[startOfWeek(weekStart)] || 0);
+            }
+            
+            if (volumeChart) {
+                volumeChart.destroy();
+            }
+
+            volumeChart = new Chart(volumeChartCanvas, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Volume (kg)',
+                        data: dataPoints,
+                        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                        borderColor: 'rgb(59, 130, 246)',
+                        borderWidth: 1,
+                        borderRadius: 5,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(100, 116, 139, 0.2)' },
+                            ticks: { color: 'rgb(148, 163, 184)' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: 'rgb(148, 163, 184)' }
+                        }
+                    }
+                }
+            });
+        };
+
+        const renderDietHistory = () => {
+            mealHistory.innerHTML = '<p class="text-gray-400">No meals logged today.</p>';
+        };
+
+        const handleLogMeal = async (e) => {
+            e.preventDefault();
+            const data = {
+                Date: new Date().toLocaleDateString(),
+                Meal: mealInput.value,
+                Calories: caloriesInput.value,
+            };
+
+            try {
+                await fetch(`${APPS_SCRIPT_URL}?action=logDiet`, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(data),
+                });
+                alert("Meal logged successfully!");
+                mealInput.value = '';
+                caloriesInput.value = '';
+            } catch(error) {
+                alert("Failed to log meal. Please check the console.");
+                console.error(error);
+            }
         };
 
         const handleLogSet = async () => {
@@ -655,7 +746,6 @@
                     body: JSON.stringify(data),
                 });
                 
-                // Show PR alert (if any)
                 const oldRecords = workoutHistory.filter(entry => entry.Exercise && entry.Exercise.trim().toLowerCase() === exerciseName.trim().toLowerCase());
                 const highestWeight = oldRecords.reduce((max, entry) => Math.max(max, parseFloat(entry["Weight (kg)"]) || 0), 0);
                 const highestReps = oldRecords.reduce((max, entry) => Math.max(max, parseInt(entry.Reps) || 0), 0);
@@ -670,6 +760,10 @@
 
                 alert("Set logged successfully!");
                 
+                setsInput.value = parseInt(setsInput.value) + 1;
+                weightsInput.value = '';
+                repsInput.value = '';
+                
             } catch (error) {
                 console.error('Error logging data:', error);
                 alert('Failed to log set. Check console for details.');
@@ -677,11 +771,6 @@
                 logSetBtn.disabled = false;
                 logSetText.textContent = 'Log Set';
                 logSetSpinner.classList.add('hidden');
-                
-                // Auto-increment sets for the next set
-                setsInput.value = parseInt(setsInput.value) + 1;
-                weightsInput.value = '';
-                repsInput.value = '';
             }
         };
         
@@ -689,54 +778,24 @@
 
         // --- New Logic: User-controlled Next Set ---
         nextSetBtn.addEventListener('click', () => {
-            // Remove PR alerts
             const prAlert = document.querySelector('.pr-alert');
             if (prAlert) {
                 prAlert.remove();
             }
 
-            // Move to the next exercise or next set
             const sets = parseInt(setsInput.value) || 1;
-            const totalSetsPlanned = 3; // Assuming 3 sets is the default
+            const totalSetsPlanned = 3;
             
             if (sets > totalSetsPlanned) {
-                // If user does more than 3 sets, we just reset the form for another set
                 setsInput.value = sets + 1;
                 weightsInput.value = '';
                 repsInput.value = '';
             } else {
-                // Otherwise, move to next exercise
                  completedExercises.push(currentExerciseIndex);
                  localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(completedExercises));
                  nextExercise();
             }
         });
-
-        const handleLogMeal = async (e) => {
-            e.preventDefault();
-            const data = {
-                Date: new Date().toLocaleDateString(),
-                Meal: mealInput.value,
-                Calories: caloriesInput.value,
-            };
-
-            try {
-                await fetch(`${APPS_SCRIPT_URL}?action=logDiet`, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify(data),
-                });
-                alert("Meal logged successfully!");
-                mealInput.value = '';
-                caloriesInput.value = '';
-            } catch(error) {
-                alert("Failed to log meal. Please check the console.");
-                console.error(error);
-            }
-        };
-
-        dietForm.addEventListener('submit', handleLogMeal);
-        settingsForm.addEventListener('submit', saveSettings);
 
         // Start the app
         init();
