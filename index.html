@@ -147,7 +147,6 @@
         
         .card-done {
             opacity: 0.5;
-            pointer-events: none;
             transition: opacity 0.3s ease-in-out;
         }
         
@@ -314,9 +313,6 @@
         let completedExercises = {};
         let workoutHistory = [];
         let currentExerciseIndex = 0;
-        let sessionSetsLogged = 0;
-        let sessionRepsCompleted = 0;
-        let sessionVolumeLifted = 0;
         let restTimerDuration = 60;
         let weeklyWorkoutGoal = 3;
         const STORAGE_KEY_COMPLETED = 'completedExercises';
@@ -486,7 +482,7 @@
             if(exerciseNoteEl) exerciseNoteEl.textContent = currentWorkout.note || '';
 
             const setsInput = document.getElementById('sets-input');
-            const nextSet = getNextSetNumber(currentExercise);
+            const nextSet = completedExercises[currentExerciseIndex] ? completedExercises[currentExerciseIndex] + 1 : 1;
             if(setsInput) setsInput.value = nextSet;
 
             const isCompleted = completedExercises[currentExerciseIndex] >= 3;
@@ -571,26 +567,19 @@
         const loadCompletedExercises = () => {
             const today = new Date().toLocaleDateString();
             const lastSessionDate = localStorage.getItem(STORAGE_KEY_LAST_SESSION);
-            const savedProgress = JSON.parse(localStorage.getItem('workoutProgress')) || {};
-
+            
             if (lastSessionDate === today) {
-                const todayProgress = savedProgress[today] || {};
-                completedExercises = Object.keys(todayProgress).filter(key => todayProgress[key] >= 3).map(Number);
+                completedExercises = JSON.parse(localStorage.getItem('completedExercises')) || {};
             } else {
                 localStorage.setItem(STORAGE_KEY_LAST_SESSION, today);
-                localStorage.setItem('workoutProgress', JSON.stringify({}));
                 completedExercises = {};
+                localStorage.removeItem('completedExercises');
             }
         };
 
         const saveExerciseProgress = (exerciseIndex, setsCompleted) => {
-            const today = new Date().toLocaleDateString();
-            const savedProgress = JSON.parse(localStorage.getItem('workoutProgress')) || {};
-            if (!savedProgress[today]) {
-                savedProgress[today] = {};
-            }
-            savedProgress[today][exerciseIndex] = setsCompleted;
-            localStorage.setItem('workoutProgress', JSON.stringify(savedProgress));
+            completedExercises[exerciseIndex] = setsCompleted;
+            localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(completedExercises));
         };
 
         const loadSettings = () => {
@@ -714,7 +703,6 @@
                 
                 const totalSetsPlanned = 3;
                 if (sets >= totalSetsPlanned) {
-                    completedExercises[currentExerciseIndex] = sets;
                     saveExerciseProgress(currentExerciseIndex, sets);
                     
                     const exerciseCard = document.getElementById('exercise-card');
