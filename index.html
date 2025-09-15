@@ -1,10 +1,12 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workout Tracker </title>
+    <title>Personal Trainer App</title>
 
+    <!-- Tailwind CSS for modern styling and responsiveness -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -322,6 +324,11 @@
 
         const init = async () => {
             try {
+                const workoutLoadingEl = document.getElementById('workout-loading');
+                if (workoutLoadingEl) {
+                    workoutLoadingEl.textContent = 'Loading data...';
+                }
+                
                 const planResponse = await fetch(WORKOUT_PLAN_URL);
                 if (!planResponse.ok) throw new Error(`Failed to fetch workout plan: ${planResponse.status} - ${planResponse.statusText}`);
                 const planText = await planResponse.text();
@@ -446,10 +453,11 @@
             const workoutLoadingEl = document.getElementById('workout-loading');
             const workoutUIEl = document.getElementById('workout-ui');
 
-            workoutLoadingEl.style.display = 'none';
-            workoutUIEl.style.display = 'block';
+            if(workoutLoadingEl) workoutLoadingEl.style.display = 'none';
+            if(workoutUIEl) workoutUIEl.style.display = 'block';
+            
             if (workoutPlan.length === 0 || workoutPlan[0].exercises.length === 0) {
-                workoutLoadingEl.textContent = "No workouts found for today.";
+                if(workoutLoadingEl) workoutLoadingEl.textContent = "No workouts found for today.";
                 return;
             }
             renderExerciseCard();
@@ -462,20 +470,31 @@
             const currentWorkout = workoutPlan[0];
             const currentExercise = currentWorkout.exercises[currentExerciseIndex];
 
-            document.getElementById('day-of-week').textContent = currentWorkout.day;
-            document.getElementById('exercise-counter').textContent = `Exercise ${currentExerciseIndex + 1} of ${currentWorkout.exercises.length}`;
-            document.getElementById('exercise-name').textContent = currentExercise;
-            document.getElementById('exercise-note').textContent = currentWorkout.note || '';
+            const dayOfWeekEl = document.getElementById('day-of-week');
+            const exerciseCounterEl = document.getElementById('exercise-counter');
+            const exerciseNameEl = document.getElementById('exercise-name');
+            const exerciseNoteEl = document.getElementById('exercise-note');
+            const addSetBtn = document.getElementById('add-set-btn');
+            const exerciseCard = document.getElementById('exercise-card');
+            
+            if(dayOfWeekEl) dayOfWeekEl.textContent = currentWorkout.day;
+            if(exerciseCounterEl) exerciseCounterEl.textContent = `Exercise ${currentExerciseIndex + 1} of ${currentWorkout.exercises.length}`;
+            if(exerciseNameEl) exerciseNameEl.textContent = currentExercise;
+            if(exerciseNoteEl) exerciseNoteEl.textContent = currentWorkout.note || '';
 
             const isCompleted = completedExercises.includes(currentExerciseIndex);
-            document.getElementById('exercise-card').classList.toggle('card-done', isCompleted);
-            document.getElementById('add-set-btn').style.display = isCompleted ? 'flex' : 'none';
+            if(exerciseCard) exerciseCard.classList.toggle('card-done', isCompleted);
+            if(addSetBtn) addSetBtn.style.display = isCompleted ? 'flex' : 'none';
 
             displayProgressiveOverload(currentExercise);
             getWorkoutRecommendation(currentExercise);
-            setsInput.value = getNextSetNumber(currentExercise);
-            weightsInput.value = '';
-            repsInput.value = '';
+            const setsInput = document.getElementById('sets-input');
+            if(setsInput) setsInput.value = getNextSetNumber(currentExercise);
+            
+            const weightsInput = document.getElementById('weights-input');
+            const repsInput = document.getElementById('reps-input');
+            if(weightsInput) weightsInput.value = '';
+            if(repsInput) repsInput.value = '';
         };
         
         const displayProgressiveOverload = (exerciseName) => {
@@ -501,18 +520,22 @@
         const getWorkoutRecommendation = (exerciseName) => {
             const lastSession = workoutHistory.find(entry => entry.Exercise && entry.Exercise.trim().toLowerCase() === exerciseName.trim().toLowerCase());
             
+            const recWeightEl = document.getElementById('rec-weight');
+            const recRepsEl = document.getElementById('rec-reps');
+            const recSection = document.getElementById('recommendation-section');
+            
             if (lastSession) {
                 const lastWeight = parseFloat(lastSession["Weight (kg)"]) || 0;
                 const lastReps = parseInt(lastSession.Reps) || 0;
                 const recommendedReps = lastReps >= 8 ? lastReps + 1 : 12;
                 const recommendedWeight = lastWeight;
 
-                document.getElementById('rec-weight').textContent = recommendedWeight;
-                document.getElementById('rec-reps').textContent = recommendedReps;
-                document.getElementById('recommendation-section').classList.remove('hidden');
+                if(recWeightEl) recWeightEl.textContent = recommendedWeight;
+                if(recRepsEl) recRepsEl.textContent = recommendedReps;
+                if(recSection) recSection.classList.remove('hidden');
 
             } else {
-                 document.getElementById('recommendation-section').classList.add('hidden');
+                 if(recSection) recSection.classList.add('hidden');
             }
         };
         
@@ -616,6 +639,11 @@
             if (streakCounterEl) streakCounterEl.textContent = streak;
         };
         
+        let volumeChart;
+        const renderVolumeChart = () => {};
+        const renderDietHistory = () => {};
+        const handleLogMeal = async (e) => {};
+        
         const handleLogSet = async () => {
             const exerciseName = document.getElementById('exercise-name').textContent;
             const weight = parseFloat(document.getElementById('weights-input').value) || 0;
@@ -674,9 +702,7 @@
                         if (result.isConfirmed) {
                             startRestTimer(restTimerDuration);
                         } else {
-                            setsInput.value = sets + 1;
-                            weightsInput.value = '';
-                            repsInput.value = '';
+                            renderExerciseCard(); // Rerender to show the next set
                         }
                     });
                 }
@@ -686,8 +712,10 @@
                     completedExercises.push(currentExerciseIndex);
                     saveExerciseProgress(currentExerciseIndex, sets);
                     
-                    document.getElementById('exercise-card').classList.add('card-done');
-                    document.getElementById('add-set-btn').style.display = 'flex';
+                    const exerciseCard = document.getElementById('exercise-card');
+                    if(exerciseCard) exerciseCard.classList.add('card-done');
+                    const addSetBtn = document.getElementById('add-set-btn');
+                    if(addSetBtn) addSetBtn.style.display = 'flex';
                 } else {
                     saveExerciseProgress(currentExerciseIndex, sets);
                 }
@@ -699,24 +727,21 @@
                 logSetBtn.disabled = false;
                 logSetText.textContent = 'Log Set';
                 logSetSpinner.classList.add('hidden');
-                
-                setsInput.value = getNextSetNumber(exerciseName);
-                weightsInput.value = '';
-                repsInput.value = '';
             }
         };
         
         const logSetBtn = document.getElementById('log-set-btn');
-        if (logSetBtn) logSetBtn.addEventListener('click', handleLogSet);
-        
+        if(logSetBtn) logSetBtn.addEventListener('click', handleLogSet);
+
         const addSetBtn = document.getElementById('add-set-btn');
-        if (addSetBtn) addSetBtn.addEventListener('click', () => {
-            document.getElementById('exercise-card').classList.remove('card-done');
-            addSetBtn.style.display = 'none';
+        if(addSetBtn) addSetBtn.addEventListener('click', () => {
+            const exerciseCard = document.getElementById('exercise-card');
+            if(exerciseCard) exerciseCard.classList.remove('card-done');
+            if(addSetBtn) addSetBtn.style.display = 'none';
         });
 
         const endSessionBtn = document.getElementById('end-session-btn');
-        if (endSessionBtn) endSessionBtn.addEventListener('click', async () => {
+        if(endSessionBtn) endSessionBtn.addEventListener('click', async () => {
             const result = await Swal.fire({
                 title: 'End Session?',
                 text: "Are you sure you want to end your workout? Your progress for today will be saved.",
@@ -751,7 +776,7 @@
 
                 timerInterval = setInterval(() => {
                     remaining--;
-                    timerDisplay.textContent = `0:${remaining.toString().padStart(2, '0')}`;
+                    timerDisplay.textContent = `0:${remaining.toString().padStart(2, '0')`;
 
                     if (remaining <= 0) {
                         clearInterval(timerInterval);
@@ -764,8 +789,8 @@
                             timer: 2000,
                             timerProgressBar: true
                         });
-                        logFormContainer.style.display = 'block';
-                        restTimerUI.style.display = 'none';
+                        if (logFormContainer) logFormContainer.style.display = 'block';
+                        if (restTimerUI) restTimerUI.style.display = 'none';
                     }
                 }, 1000);
             }
@@ -780,13 +805,6 @@
             if (restTimerUI) restTimerUI.style.display = 'none';
         });
 
-        const setsInput = document.getElementById('sets-input');
-        const weightsInput = document.getElementById('weights-input');
-        const repsInput = document.getElementById('reps-input');
-        
-        const settingsForm = document.getElementById('settings-form');
-        if (settingsForm) settingsForm.addEventListener('submit', saveSettings);
-        
         init();
     </script>
 </body>
