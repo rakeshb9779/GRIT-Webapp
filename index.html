@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NeoFit - Cyberpunk Workout Tracker</title>
+    <title>NeoFit Pro - Cyberpunk Workout Tracker</title>
 
     <!-- Tailwind CSS for modern styling and responsiveness -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -636,7 +636,7 @@
                             </div>
                         </div>
                         
-                        <div id="recommendation-section" class="text-center mb-6 hidden">
+                        <div id="recommendation-section" class="text-center mb-6">
                             <div class="p-4" style="background: rgba(57, 255, 20, 0.1); border: 1px solid var(--border-secondary); border-radius: var(--border-radius);">
                                 <span style="color: var(--neon-green); font-weight: 600;">
                                     Recommended: <span id="rec-weight">85</span>kg for <span id="rec-reps">12</span> reps
@@ -826,8 +826,8 @@
                 loadSettings();
                 loadCompletedExercises();
                 loadWorkoutStreak();
-
                 renderDashboard();
+                
                 const initialPage = window.location.hash.substring(1) || 'dashboard';
                 showPage(initialPage);
                 
@@ -853,12 +853,14 @@
                 setTimeout(() => targetPage.classList.add('active'), 50);
             }
             
-            navLinks.forEach(link => {
-                link.classList.remove('active');
-                if (link.dataset.page === pageId) {
-                    link.classList.add('active');
-                }
-            });
+            if (navLinks) {
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.dataset.page === pageId) {
+                        link.classList.add('active');
+                    }
+                });
+            }
             
             window.location.hash = pageId;
 
@@ -989,31 +991,12 @@
             }
 
             recentSets.forEach(set => {
-                const setEl = document.createElement('div');
-                setEl.className = 'flex justify-between p-2 mb-2';
-                setEl.style.background = 'rgba(0, 245, 255, 0.1)';
-                setEl.style.borderRadius = '8px';
-                setEl.innerHTML = `<span>Set ${set.Sets}: ${set.Reps} reps @ ${set["Weight (kg)"]}kg</span><span>${getRelativeTime(set.Date)}</span>`;
+                const setEl = document.createElement('p');
+                setEl.textContent = `Set ${set.Sets}: ${set.Reps} reps @ ${set["Weight (kg)"]}kg`;
                 historyListEl.appendChild(setEl);
             });
         };
         
-        const getRelativeTime = (dateString) => {
-            const today = new Date();
-            const dateParts = dateString.split('/');
-            const day = dateParts[0];
-            const month = dateParts[1] - 1; // Months are 0-indexed
-            const year = dateParts[2];
-            const entryDate = new Date(year, month, day);
-
-            const diffTime = Math.abs(today - entryDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            
-            if (diffDays === 0) return 'Today';
-            if (diffDays === 1) return 'Yesterday';
-            return `${diffDays} days ago`;
-        };
-
         const getWorkoutRecommendation = (exerciseName) => {
             const lastSession = workoutHistory.find(entry => entry.Exercise.toLowerCase() === exerciseName.toLowerCase());
             
@@ -1122,10 +1105,10 @@
                 Reps: reps,
                 'Weight (kg)': weight,
             };
-            
+
             try {
                 const payload = { action: 'logWorkout', data: data };
-                await fetch(APPS_SCRIPT_URL, {
+                const response = await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
                     body: JSON.stringify(payload),
@@ -1220,6 +1203,7 @@
 
                     if (remaining <= 0) {
                         clearInterval(timerInterval);
+                        if(timerPing) timerPing.play();
                         Swal.fire({
                             title: 'Time\'s Up!',
                             text: 'Rest is over. Ready for your next set!',
