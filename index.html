@@ -1,4 +1,3 @@
-<!-- NeoFit_Project_Alpha.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,7 +16,6 @@
 
     <style>
         :root {
-            /* Cyberpunk Color Palette */
             --bg-primary: #0a0a0f;
             --bg-secondary: #111118;
             --bg-tertiary: #1a1a24;
@@ -776,7 +774,7 @@
         let restTimerDuration = 60;
         let weeklyWorkoutGoal = 3;
         let timerInterval;
-
+        
         // --- Local Storage Keys ---
         const STORAGE_KEY_COMPLETED = 'completedExercises';
         const STORAGE_KEY_LAST_SESSION = 'lastSessionDate';
@@ -806,14 +804,14 @@
         const nextSetBtn = document.getElementById('next-set-btn');
         const leftNavBtn = document.getElementById('left-nav-btn');
         const rightNavBtn = document.getElementById('right-nav-btn');
+        const addSetBtn = document.getElementById('add-set-btn');
         const endSessionBtn = document.getElementById('end-session-btn');
         const saveSettingsBtn = document.getElementById('save-settings-btn');
         const restTimerSettingInput = document.getElementById('rest-timer-setting');
         const weeklyGoalSettingInput = document.getElementById('weekly-goal-setting');
         const streakCounterEl = document.getElementById('streak-counter');
         const weeklyProgressEl = document.getElementById('weekly-progress');
-        const addSetBtn = document.getElementById('add-set-btn');
-        
+
         // --- Core Functions ---
         const init = async () => {
             try {
@@ -832,8 +830,8 @@
                 loadSettings();
                 loadCompletedExercises();
                 loadWorkoutStreak();
+
                 renderDashboard();
-                
                 const initialPage = window.location.hash.substring(1) || 'dashboard';
                 showPage(initialPage);
                 
@@ -877,14 +875,16 @@
             }
         };
 
-        navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const pageId = link.dataset.page;
-                showPage(pageId);
+        if (navLinks) {
+             navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageId = link.dataset.page;
+                    showPage(pageId);
+                });
             });
-        });
-
+        }
+        
         if (startSessionBtn) {
             startSessionBtn.addEventListener('click', () => {
                 currentExerciseIndex = 0;
@@ -1051,14 +1051,14 @@
             const settings = JSON.parse(localStorage.getItem(STORAGE_KEY_SETTINGS)) || {};
             restTimerDuration = parseInt(settings.restTimer) || 60;
             weeklyWorkoutGoal = parseInt(settings.weeklyGoal) || 3;
-            if (restTimerSettingInput) restTimerSettingInput.value = restTimerDuration;
-            if (weeklyGoalSettingInput) weeklyGoalSettingInput.value = weeklyWorkoutGoal;
+            if (document.getElementById('rest-timer-setting')) document.getElementById('rest-timer-setting').value = restTimerDuration;
+            if (document.getElementById('weekly-goal-setting')) document.getElementById('weekly-goal-setting').value = weeklyWorkoutGoal;
         };
 
         const saveSettings = (e) => {
             e.preventDefault();
-            const newDuration = parseInt(restTimerSettingInput.value);
-            const newGoal = parseInt(weeklyGoalSettingInput.value);
+            const newDuration = parseInt(document.getElementById('rest-timer-setting').value);
+            const newGoal = parseInt(document.getElementById('weekly-goal-setting').value);
             
             if (newDuration >= 30 && newDuration <= 300 && newGoal >= 1 && newGoal <= 7) {
                 restTimerDuration = newDuration;
@@ -1076,20 +1076,20 @@
                 Swal.fire('Error!', 'Please enter a valid rest timer (30-300s) and weekly goal (1-7 workouts).', 'error');
             }
         };
-
+        
         const loadWorkoutStreak = () => {
             const streak = parseInt(localStorage.getItem(STORAGE_KEY_STREAK)) || 7;
             if (streakCounterEl) streakCounterEl.textContent = streak;
         };
         
-        async function handleLogSet() {
+        const handleLogSet = async () => {
             const exerciseName = document.getElementById('exercise-name').textContent;
             const weight = parseFloat(document.getElementById('weights-input').value) || 0;
             const reps = parseInt(document.getElementById('reps-input').value) || 0;
             const sets = parseInt(document.getElementById('sets-input').value) || 1;
 
             if (weight === 0 || reps === 0) {
-                Swal.fire('Error', 'Please enter valid weight and reps.', 'error');
+                 Swal.fire('Error', 'Please enter a valid weight and number of reps.', 'error');
                 return;
             }
 
@@ -1106,79 +1106,94 @@
                 Reps: reps,
                 'Weight (kg)': weight,
             };
-
-            // Simulate API call
-            await new Promise(r => setTimeout(r, 1000));
-            workoutHistory.push(data);
             
-            const oldRecords = workoutHistory.filter(entry => entry.Exercise.toLowerCase() === exerciseName.toLowerCase());
-            const highestWeight = oldRecords.reduce((max, entry) => Math.max(max, parseFloat(entry["Weight (kg)"]) || 0), 0);
-            const isNewPR = weight > highestWeight;
-
-            if (isNewPR) {
-                Swal.fire({
-                    title: 'New Personal Record! 🎉',
-                    text: `You lifted ${weight}kg, your new personal best!`,
-                    icon: 'success',
-                    confirmButtonColor: '#00f5ff'
+            try {
+                const payload = { action: 'logWorkout', data: data };
+                await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(payload),
                 });
-            } else {
-                Swal.fire({
-                    title: 'Set Logged!',
-                    text: 'Great work! What\'s next?',
-                    icon: 'success',
-                    showCancelButton: true,
-                    confirmButtonText: 'Start Rest Timer',
-                    cancelButtonText: 'Next Set',
-                    confirmButtonColor: '#00f5ff',
-                    cancelButtonColor: '#39ff14'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        startRestTimer(restTimerDuration);
-                    } else {
-                        renderExerciseCard();
-                    }
-                });
-            }
-            
-            const totalSetsPlanned = 3;
-            if (sets >= totalSetsPlanned) {
-                saveExerciseProgress(currentExerciseIndex, sets);
-                const exerciseCard = document.querySelector('.exercise-card');
-                if (exerciseCard) exerciseCard.classList.add('completed');
-            } else {
-                saveExerciseProgress(currentExerciseIndex, sets);
-            }
+                
+                const oldRecords = workoutHistory.filter(entry => entry.Exercise.toLowerCase() === exerciseName.toLowerCase());
+                const highestWeight = oldRecords.reduce((max, entry) => Math.max(max, parseFloat(entry["Weight (kg)"]) || 0), 0);
+                const isNewPR = weight > highestWeight;
 
-            if (logSetBtn) {
-                logSetBtn.disabled = false;
+                if (isNewPR) {
+                    Swal.fire({
+                        title: 'New Personal Record! 🎉',
+                        text: `You lifted ${weight}kg, your new personal best!`,
+                        icon: 'success',
+                        confirmButtonColor: '#00f5ff'
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Set logged!',
+                        text: 'Great work! What\'s next?',
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonText: 'Start Rest Timer',
+                        cancelButtonText: 'Next Set',
+                        confirmButtonColor: '#00f5ff',
+                        cancelButtonColor: '#39ff14'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            startRestTimer(restTimerDuration);
+                        } else {
+                            renderExerciseCard();
+                        }
+                    });
+                }
+                
+                const totalSetsPlanned = 3;
+                if (sets >= totalSetsPlanned) {
+                    saveExerciseProgress(currentExerciseIndex, sets);
+                    const exerciseCard = document.getElementById('exercise-card');
+                    if (exerciseCard) exerciseCard.classList.add('completed');
+                } else {
+                    saveExerciseProgress(currentExerciseIndex, sets);
+                }
+
+            } catch (error) {
+                console.error('Error logging data:', error);
+                Swal.fire('Error', 'Failed to log set. Check console for details.', 'error');
+            } finally {
+                if (logSetBtn) logSetBtn.disabled = false;
                 if (logSetText) logSetText.textContent = 'Log Set';
                 if (logSetSpinner) logSetSpinner.classList.add('hidden');
             }
-        }
+        };
+        
+        if (logSetBtn) logSetBtn.addEventListener('click', handleLogSet);
+        if (addSetBtn) addSetBtn.addEventListener('click', () => {
+            const exerciseCard = document.getElementById('exercise-card');
+            if (exerciseCard) exerciseCard.classList.remove('completed');
+        });
 
-        async function handleEndSession() {
-            const result = await Swal.fire({
-                title: 'End Session?',
-                text: 'Are you sure you want to end your workout?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ff6600',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Yes, end session!'
-            });
-
-            if (result.isConfirmed) {
-                Swal.fire({
-                    title: 'Session Complete! 🎉',
-                    text: 'Your hard work has been logged. Great job!',
-                    icon: 'success',
-                    confirmButtonColor: '#00f5ff'
+        if (endSessionBtn) {
+            endSessionBtn.addEventListener('click', async () => {
+                const result = await Swal.fire({
+                    title: 'End Session?',
+                    text: 'Are you sure you want to end your workout?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ff6600',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Yes, end session!'
                 });
-                showPage('dashboard');
-            }
-        }
 
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Session Complete! 🎉',
+                        text: 'Your hard work has been logged. Great job!',
+                        icon: 'success',
+                        confirmButtonColor: '#00f5ff'
+                    });
+                    showPage('dashboard');
+                }
+            });
+        }
+        
         function startRestTimer(seconds) {
             const logFormContainer = document.getElementById('log-form-container');
             const restTimerUI = document.getElementById('rest-timer-ui');
@@ -1218,27 +1233,12 @@
             document.getElementById('rest-timer-ui').classList.add('hidden');
         }
 
-        navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const pageId = link.dataset.page;
-                showPage(pageId);
-            });
+        if (nextSetBtn) nextSetBtn.addEventListener('click', () => {
+            skipRestTimer();
+            renderExerciseCard();
         });
-
-        if (startSessionBtn) {
-            startSessionBtn.addEventListener('click', () => {
-                currentExerciseIndex = 0;
-                showPage('workout');
-            });
-        }
         
-        if (leftNavBtn) leftNavBtn.addEventListener('click', () => navigateExercises('left'));
-        if (rightNavBtn) rightNavBtn.addEventListener('click', () => navigateExercises('right'));
-        if (logSetBtn) logSetBtn.addEventListener('click', handleLogSet);
-        if (endSessionBtn) endSessionBtn.addEventListener('click', handleEndSession);
-        if (nextSetBtn) nextSetBtn.addEventListener('click', skipRestTimer);
-        if (saveSettingsBtn) saveSettingsBtn.addEventListener('click', saveSettings);
+        if(saveSettingsBtn) saveSettingsBtn.addEventListener('click', saveSettings);
         
         init();
     </script>
