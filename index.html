@@ -424,10 +424,12 @@
             });
         });
 
-        startSessionBtn.addEventListener('click', () => {
-            currentExerciseIndex = 0;
-            showPage('workout');
-        });
+        if (startSessionBtn) {
+            startSessionBtn.addEventListener('click', () => {
+                currentExerciseIndex = 0;
+                showPage('workout');
+            });
+        }
 
         const parseWorkoutPlan = (text) => {
             const lines = text.split('\n').filter(line => line.trim() !== '');
@@ -770,12 +772,6 @@
             clearInterval(timerInterval);
             logFormContainer.style.display = 'block';
             restTimerUI.style.display = 'none';
-        });
-        
-        // Final event listeners for the dashboard buttons
-        if (startSessionBtn) startSessionBtn.addEventListener('click', () => {
-            currentExerciseIndex = 0;
-            showPage('workout');
         });
 
         init();
