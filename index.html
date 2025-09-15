@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Workout Tracker Pro</title>
 
-    <!-- Tailwind CSS for modern styling and responsiveness -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         :root {
@@ -150,43 +149,6 @@
             transition: opacity 0.3s ease-in-out;
         }
         
-        /* Modal UI */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: var(--bg-dark);
-            border-radius: 20px;
-            padding: 2rem;
-            text-align: center;
-            max-width: 90%;
-            width: 400px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            position: relative;
-        }
-        .modal-close {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: none;
-            border: none;
-            color: var(--text-muted-dark);
-            cursor: pointer;
-        }
-        .modal-icon {
-            margin: 0 auto 1rem;
-            color: rgb(var(--primary-rgb));
-        }
-        
     </style>
 </head>
 <body class="dark-theme">
@@ -271,12 +233,6 @@
                                     <div id="log-set-spinner" class="hidden animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
                                 </button>
                             </div>
-                            <!-- Rest Timer UI - NEWLY ADDED -->
-                            <div id="rest-timer-ui" class="hidden text-center space-y-4">
-                                <h4 class="text-lg font-semibold text-gray-300">Rest Timer</h4>
-                                <div id="timer-display" class="timer-container"></div>
-                                <button id="next-set-btn" class="futuristic-btn w-full mt-4">Skip Rest</button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -344,18 +300,6 @@
     
     <audio id="timer-ping" src="https://assets.mixkit.co/sfx/preview/mixkit-positive-notification-390.mp3"></audio>
 
-    <!-- Custom Modal for Alerts and Confirmations -->
-    <div id="custom-modal-overlay" class="modal-overlay">
-        <div id="custom-modal-content" class="modal-content">
-            <h3 id="modal-title" class="text-2xl font-bold mb-4"></h3>
-            <p id="modal-text" class="text-gray-400 mb-6"></p>
-            <div id="modal-actions" class="flex justify-center space-x-4">
-                <button id="modal-confirm-btn" class="futuristic-btn futuristic-btn-secondary">OK</button>
-                <button id="modal-cancel-btn" class="futuristic-btn">Cancel</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         lucide.createIcons();
 
@@ -364,47 +308,10 @@
 
         const pageContents = document.querySelectorAll('.page-content');
         const navLinks = document.querySelectorAll('.nav-item');
-        const startSessionBtn = document.getElementById('start-session-btn');
-        const workoutLoadingEl = document.getElementById('workout-loading');
-        const workoutUIEl = document.getElementById('workout-ui');
-        const dayOfWeekEl = document.getElementById('day-of-week');
-        const exerciseCounterEl = document.getElementById('exercise-counter');
-        const exerciseNameEl = document.getElementById('exercise-name');
-        const exerciseNoteEl = document.getElementById('exercise-note');
-        const historyListEl = document.getElementById('history-list');
-        const logFormContainer = document.getElementById('log-form-container');
-        const logSetBtn = document.getElementById('log-set-btn');
-        const logSetText = document.getElementById('log-set-text');
-        const logSetSpinner = document.getElementById('log-set-spinner');
-        const setsInput = document.getElementById('sets-input');
-        const weightsInput = document.getElementById('weights-input');
-        const repsInput = document.getElementById('reps-input');
-        const restTimerUI = document.getElementById('rest-timer-ui');
-        const timerDisplay = document.getElementById('timer-display');
-        const nextSetBtn = document.getElementById('next-set-btn');
-        const leftNavBtn = document.getElementById('left-nav-btn');
-        const rightNavBtn = document.getElementById('right-nav-btn');
-        const addSetBtn = document.getElementById('add-set-btn');
-        const endSessionBtn = document.getElementById('end-session-btn');
-        const timerPing = document.getElementById('timer-ping');
-
-        const streakCounterEl = document.getElementById('streak-counter');
-        const weeklyProgressEl = document.getElementById('weekly-progress');
-        const volumeChartCanvas = document.getElementById('volume-chart');
-        const settingsForm = document.getElementById('settings-form');
-        const restTimerSettingInput = document.getElementById('rest-timer-setting');
-        const weeklyGoalSettingInput = document.getElementById('weekly-goal-setting');
-        const dietForm = document.getElementById('diet-form');
-        const mealInput = document.getElementById('meal-input');
-        const caloriesInput = document.getElementById('calories-input');
-        const mealHistory = document.getElementById('meal-history');
         let workoutPlan = [];
         let completedExercises = [];
         let workoutHistory = [];
         let currentExerciseIndex = 0;
-        let sessionSetsLogged = 0;
-        let sessionRepsCompleted = 0;
-        let sessionVolumeLifted = 0;
         let restTimerDuration = 60;
         let weeklyWorkoutGoal = 3;
         const STORAGE_KEY_COMPLETED = 'completedExercises';
@@ -412,50 +319,6 @@
         const STORAGE_KEY_STREAK = 'workoutStreak';
         const STORAGE_KEY_LAST_WORKOUT = 'lastWorkoutDate';
         const STORAGE_KEY_SETTINGS = 'appSettings';
-        const STORAGE_KEY_EXERCISE_SETS = 'currentExerciseSets';
-        let chart;
-        
-        // Modal UI Elements
-        const modalOverlay = document.getElementById('custom-modal-overlay');
-        const modalTitle = document.getElementById('modal-title');
-        const modalText = document.getElementById('modal-text');
-        const modalConfirmBtn = document.getElementById('modal-confirm-btn');
-        const modalCancelBtn = document.getElementById('modal-cancel-btn');
-
-        const showModal = (title, text, showCancel = false) => {
-            modalTitle.textContent = title;
-            modalText.textContent = text;
-            modalConfirmBtn.textContent = 'OK';
-            modalCancelBtn.style.display = showCancel ? 'inline-block' : 'none';
-            modalOverlay.style.display = 'flex';
-        };
-
-        const showConfirmModal = (title, text, confirmText, cancelText) => {
-            return new Promise((resolve) => {
-                modalTitle.textContent = title;
-                modalText.textContent = text;
-                modalConfirmBtn.textContent = confirmText;
-                modalCancelBtn.textContent = cancelText;
-                modalCancelBtn.style.display = 'inline-block';
-                modalOverlay.style.display = 'flex';
-
-                const handleConfirm = () => {
-                    hideModal();
-                    resolve(true);
-                };
-                const handleCancel = () => {
-                    hideModal();
-                    resolve(false);
-                };
-
-                modalConfirmBtn.onclick = handleConfirm;
-                modalCancelBtn.onclick = handleCancel;
-            });
-        };
-
-        const hideModal = () => {
-            modalOverlay.style.display = 'none';
-        };
 
         const init = async () => {
             try {
@@ -502,15 +365,16 @@
             window.location.hash = pageId;
 
             if (pageId === 'workout') {
+                const workoutLoadingEl = document.getElementById('workout-loading');
                 if (workoutPlan.length === 0 || workoutPlan[0].exercises.length === 0) {
                     workoutLoadingEl.textContent = "No workouts found for today.";
                     return;
                 }
                 renderWorkoutPage();
             } else if (pageId === 'progress') {
-                renderVolumeChart();
+                //renderVolumeChart();
             } else if (pageId === 'diet') {
-                //renderDietHistory();
+                 //renderDietHistory();
             }
         };
 
@@ -521,11 +385,14 @@
             });
         });
 
-        startSessionBtn.addEventListener('click', () => {
-            currentExerciseIndex = 0;
-            showPage('workout');
-        });
-
+        const startSessionBtn = document.getElementById('start-session-btn');
+        if (startSessionBtn) {
+            startSessionBtn.addEventListener('click', () => {
+                currentExerciseIndex = 0;
+                showPage('workout');
+            });
+        }
+        
         const parseWorkoutPlan = (text) => {
             const lines = text.split('\n').filter(line => line.trim() !== '');
             if (lines.length === 0) return [];
@@ -557,6 +424,7 @@
         const renderDashboard = () => {
             const workoutDaysThisWeek = getWorkoutsThisWeek().length;
             const progress = Math.min(100, Math.round((workoutDaysThisWeek / weeklyWorkoutGoal) * 100));
+            const weeklyProgressEl = document.getElementById('weekly-progress');
             if (weeklyProgressEl) weeklyProgressEl.textContent = `${progress}%`;
         };
 
@@ -575,6 +443,9 @@
         };
 
         const renderWorkoutPage = () => {
+            const workoutLoadingEl = document.getElementById('workout-loading');
+            const workoutUIEl = document.getElementById('workout-ui');
+
             workoutLoadingEl.style.display = 'none';
             workoutUIEl.style.display = 'block';
             if (workoutPlan.length === 0 || workoutPlan[0].exercises.length === 0) {
@@ -585,15 +456,16 @@
         };
 
         const renderExerciseCard = () => {
-            if (workoutPlan.length === 0 || workoutPlan[0].exercises.length === 0) return;
+            const workoutUIEl = document.getElementById('workout-ui');
+            if (!workoutUIEl || workoutPlan.length === 0 || workoutPlan[0].exercises.length === 0) return;
 
             const currentWorkout = workoutPlan[0];
             const currentExercise = currentWorkout.exercises[currentExerciseIndex];
 
-            dayOfWeekEl.textContent = currentWorkout.day;
-            exerciseCounterEl.textContent = `Exercise ${currentExerciseIndex + 1} of ${currentWorkout.exercises.length}`;
-            exerciseNameEl.textContent = currentExercise;
-            exerciseNoteEl.textContent = currentWorkout.note || '';
+            document.getElementById('day-of-week').textContent = currentWorkout.day;
+            document.getElementById('exercise-counter').textContent = `Exercise ${currentExerciseIndex + 1} of ${currentWorkout.exercises.length}`;
+            document.getElementById('exercise-name').textContent = currentExercise;
+            document.getElementById('exercise-note').textContent = currentWorkout.note || '';
 
             const isCompleted = completedExercises.includes(currentExerciseIndex);
             document.getElementById('exercise-card').classList.toggle('card-done', isCompleted);
@@ -601,17 +473,14 @@
 
             displayProgressiveOverload(currentExercise);
             getWorkoutRecommendation(currentExercise);
-
-            // Load the number of sets completed for the current exercise from local storage
-            const exerciseSets = JSON.parse(localStorage.getItem(STORAGE_KEY_EXERCISE_SETS) || '{}');
-            const setsCompleted = exerciseSets[currentExercise] || 0;
-            setsInput.value = setsCompleted + 1;
-
+            setsInput.value = getNextSetNumber(currentExercise);
             weightsInput.value = '';
             repsInput.value = '';
         };
         
         const displayProgressiveOverload = (exerciseName) => {
+            const historyListEl = document.getElementById('history-list');
+            if (!historyListEl) return;
             historyListEl.innerHTML = '';
             const recentSets = workoutHistory
                 .filter(entry => entry.Exercise && entry.Exercise.trim().toLowerCase() === exerciseName.trim().toLowerCase())
@@ -657,46 +526,74 @@
             renderExerciseCard();
         };
 
-        leftNavBtn.addEventListener('click', () => navigateExercises('left'));
-        rightNavBtn.addEventListener('click', () => navigateExercises('right'));
+        const leftNavBtn = document.getElementById('left-nav-btn');
+        const rightNavBtn = document.getElementById('right-nav-btn');
+        if (leftNavBtn) leftNavBtn.addEventListener('click', () => navigateExercises('left'));
+        if (rightNavBtn) rightNavBtn.addEventListener('click', () => navigateExercises('right'));
+
+        const getNextSetNumber = (exerciseName) => {
+            const today = new Date().toLocaleDateString();
+            const exerciseSets = workoutHistory.filter(entry => {
+                const entryDate = new Date(entry.Date).toLocaleDateString();
+                return entry.Exercise.trim().toLowerCase() === exerciseName.trim().toLowerCase() && entryDate === today;
+            });
+            return exerciseSets.length + 1;
+        };
 
         const loadCompletedExercises = () => {
             const today = new Date().toLocaleDateString();
             const lastSessionDate = localStorage.getItem(STORAGE_KEY_LAST_SESSION);
+            const savedProgress = JSON.parse(localStorage.getItem('workoutProgress')) || {};
 
             if (lastSessionDate === today) {
-                const storedCompleted = localStorage.getItem(STORAGE_KEY_COMPLETED);
-                if (storedCompleted) {
-                    completedExercises = JSON.parse(storedCompleted);
-                }
+                const todayProgress = savedProgress[today] || {};
+                completedExercises = Object.keys(todayProgress).filter(key => todayProgress[key] >= 3).map(Number);
             } else {
                 localStorage.setItem(STORAGE_KEY_LAST_SESSION, today);
+                localStorage.setItem('workoutProgress', JSON.stringify({}));
                 completedExercises = [];
-                localStorage.removeItem(STORAGE_KEY_COMPLETED);
             }
+        };
+
+        const saveExerciseProgress = (exerciseIndex, setsCompleted) => {
+            const today = new Date().toLocaleDateString();
+            const savedProgress = JSON.parse(localStorage.getItem('workoutProgress')) || {};
+            if (!savedProgress[today]) {
+                savedProgress[today] = {};
+            }
+            savedProgress[today][exerciseIndex] = setsCompleted;
+            localStorage.setItem('workoutProgress', JSON.stringify(savedProgress));
         };
 
         const loadSettings = () => {
             const settings = JSON.parse(localStorage.getItem(STORAGE_KEY_SETTINGS)) || {};
             restTimerDuration = parseInt(settings.restTimer) || 60;
             weeklyWorkoutGoal = parseInt(settings.weeklyGoal) || 3;
+            const restTimerSettingInput = document.getElementById('rest-timer-setting');
+            const weeklyGoalSettingInput = document.getElementById('weekly-goal-setting');
             if (restTimerSettingInput) restTimerSettingInput.value = restTimerDuration;
             if (weeklyGoalSettingInput) weeklyGoalSettingInput.value = weeklyWorkoutGoal;
         };
 
         const saveSettings = (e) => {
             e.preventDefault();
-            const newDuration = parseInt(restTimerSettingInput.value);
-            const newGoal = parseInt(weeklyGoalSettingInput.value);
+            const newDuration = parseInt(document.getElementById('rest-timer-setting').value);
+            const newGoal = parseInt(document.getElementById('weekly-goal-setting').value);
             
             if (newDuration >= 30 && newDuration <= 300 && newGoal >= 1 && newGoal <= 7) {
                 restTimerDuration = newDuration;
                 weeklyWorkoutGoal = newGoal;
                 localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify({ restTimer: newDuration, weeklyGoal: newGoal }));
-                showModal('Saved!', 'Your settings have been saved.');
-                setTimeout(hideModal, 1500);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Saved!',
+                    text: 'Your settings have been saved.',
+                    showConfirmButton: false,
+                    timer: 1500,
+                    timerProgressBar: true
+                });
             } else {
-                showModal('Error!', 'Please enter a valid rest timer (30-300s) and weekly goal (1-7 workouts).');
+                Swal.fire('Error!', 'Please enter a valid rest timer (30-300s) and weekly goal (1-7 workouts).', 'error');
             }
         };
         
@@ -715,24 +612,24 @@
                 }
             }
             localStorage.setItem(STORAGE_KEY_STREAK, streak);
+            const streakCounterEl = document.getElementById('streak-counter');
             if (streakCounterEl) streakCounterEl.textContent = streak;
         };
         
-        let volumeChart;
-        const renderVolumeChart = () => {};
-        const renderDietHistory = () => {};
-        const handleLogMeal = async (e) => {};
-        
         const handleLogSet = async () => {
-            const exerciseName = exerciseNameEl.textContent;
-            const weight = parseFloat(weightsInput.value) || 0;
-            const reps = parseInt(repsInput.value) || 0;
-            const sets = parseInt(setsInput.value) || 1;
+            const exerciseName = document.getElementById('exercise-name').textContent;
+            const weight = parseFloat(document.getElementById('weights-input').value) || 0;
+            const reps = parseInt(document.getElementById('reps-input').value) || 0;
+            const sets = getNextSetNumber(exerciseName);
 
             if (weight === 0 || reps === 0) {
-                showModal('Error', 'Please enter a valid weight and number of reps.');
+                 Swal.fire('Error', 'Please enter a valid weight and number of reps.', 'error');
                 return;
             }
+
+            const logSetBtn = document.getElementById('log-set-btn');
+            const logSetText = document.getElementById('log-set-text');
+            const logSetSpinner = document.getElementById('log-set-spinner');
 
             logSetBtn.disabled = true;
             logSetText.textContent = 'Logging...';
@@ -755,96 +652,141 @@
                     body: JSON.stringify(payload),
                 });
                 
-                // Update local storage with the new set count
-                const exerciseSets = JSON.parse(localStorage.getItem(STORAGE_KEY_EXERCISE_SETS) || '{}');
-                exerciseSets[exerciseName] = sets;
-                localStorage.setItem(STORAGE_KEY_EXERCISE_SETS, JSON.stringify(exerciseSets));
-
                 const oldRecords = workoutHistory.filter(entry => entry.Exercise && entry.Exercise.trim().toLowerCase() === exerciseName.trim().toLowerCase());
                 const highestWeight = oldRecords.reduce((max, entry) => Math.max(max, parseFloat(entry["Weight (kg)"]) || 0), 0);
                 const isNewPR = weight > highestWeight;
 
                 if (isNewPR) {
-                    showModal('New Personal Record! 🎉', `You lifted ${weight}kg, your new personal best!`);
-                    // Update UI after a new PR
-                    setsInput.value = sets + 1;
-                    weightsInput.value = '';
-                    repsInput.value = '';
+                    Swal.fire({
+                        title: 'New Personal Record! 🎉',
+                        text: `You lifted ${weight}kg, your new personal best!`,
+                        icon: 'success'
+                    });
                 } else {
-                    const result = await showConfirmModal('Set logged!', `What's next?`, 'Start Rest Timer', 'Log Next Set');
-                    if (result) {
-                        startRestTimer(restTimerDuration);
-                    } else {
-                        // Increment sets input for the next set
-                        setsInput.value = sets + 1;
-                        weightsInput.value = '';
-                        repsInput.value = '';
-                    }
+                    Swal.fire({
+                        title: 'Set logged!',
+                        html: `What's next?`,
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonText: 'Start Rest Timer',
+                        cancelButtonText: 'Log Next Set'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            startRestTimer(restTimerDuration);
+                        } else {
+                            setsInput.value = sets + 1;
+                            weightsInput.value = '';
+                            repsInput.value = '';
+                        }
+                    });
                 }
                 
                 const totalSetsPlanned = 3;
                 if (sets >= totalSetsPlanned && !completedExercises.includes(currentExerciseIndex)) {
                     completedExercises.push(currentExerciseIndex);
-                    localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(completedExercises));
+                    saveExerciseProgress(currentExerciseIndex, sets);
                     
                     document.getElementById('exercise-card').classList.add('card-done');
-                    addSetBtn.style.display = 'flex';
+                    document.getElementById('add-set-btn').style.display = 'flex';
+                } else {
+                    saveExerciseProgress(currentExerciseIndex, sets);
                 }
 
             } catch (error) {
                 console.error('Error logging data:', error);
-                showModal('Error', 'Failed to log set. Check console for details.');
+                Swal.fire('Error', 'Failed to log set. Check console for details.', 'error');
             } finally {
                 logSetBtn.disabled = false;
                 logSetText.textContent = 'Log Set';
                 logSetSpinner.classList.add('hidden');
+                
+                setsInput.value = getNextSetNumber(exerciseName);
+                weightsInput.value = '';
+                repsInput.value = '';
             }
         };
         
-        logSetBtn.addEventListener('click', handleLogSet);
-
-        addSetBtn.addEventListener('click', () => {
+        const logSetBtn = document.getElementById('log-set-btn');
+        if (logSetBtn) logSetBtn.addEventListener('click', handleLogSet);
+        
+        const addSetBtn = document.getElementById('add-set-btn');
+        if (addSetBtn) addSetBtn.addEventListener('click', () => {
             document.getElementById('exercise-card').classList.remove('card-done');
             addSetBtn.style.display = 'none';
         });
 
-        endSessionBtn.addEventListener('click', async () => {
-            const result = await showConfirmModal('End Session?', "Are you sure you want to end your workout? Your progress for today will be saved.", 'Yes, end session!', 'Cancel');
-            if (result) {
-                showModal('Session Ended!', 'Your hard work has been logged. Great job!');
-                setTimeout(hideModal, 2000);
+        const endSessionBtn = document.getElementById('end-session-btn');
+        if (endSessionBtn) endSessionBtn.addEventListener('click', async () => {
+            const result = await Swal.fire({
+                title: 'End Session?',
+                text: "Are you sure you want to end your workout? Your progress for today will be saved.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#34d399',
+                cancelButtonColor: '#ef4444',
+                confirmButtonText: 'Yes, end session!'
+            });
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Session Ended!',
+                    text: 'Your hard work has been logged. Great job!',
+                    icon: 'success'
+                });
                 showPage('dashboard');
             }
         });
         
         let timerInterval;
         const startRestTimer = (seconds) => {
-            logFormContainer.style.display = 'none';
-            restTimerUI.style.display = 'block';
-            let remaining = seconds;
-            timerDisplay.textContent = `0:${remaining.toString().padStart(2, '0')}`;
+            const logFormContainer = document.getElementById('log-form-container');
+            const restTimerUI = document.getElementById('rest-timer-ui');
+            const timerDisplay = document.getElementById('timer-display');
+            const timerPing = document.getElementById('timer-ping');
 
-            timerInterval = setInterval(() => {
-                remaining--;
+            if (logFormContainer && restTimerUI) {
+                logFormContainer.style.display = 'none';
+                restTimerUI.style.display = 'block';
+                let remaining = seconds;
                 timerDisplay.textContent = `0:${remaining.toString().padStart(2, '0')}`;
 
-                if (remaining <= 0) {
-                    clearInterval(timerInterval);
-                    timerPing.play();
-                    showModal('Time\'s Up!', 'Rest is over. Get ready for your next set!');
-                    setTimeout(hideModal, 2000);
-                    logFormContainer.style.display = 'block';
-                    restTimerUI.style.display = 'none';
-                }
-            }, 1000);
+                timerInterval = setInterval(() => {
+                    remaining--;
+                    timerDisplay.textContent = `0:${remaining.toString().padStart(2, '0')}`;
+
+                    if (remaining <= 0) {
+                        clearInterval(timerInterval);
+                        timerPing.play();
+                        Swal.fire({
+                            title: 'Time\'s Up!',
+                            text: 'Rest is over. Get ready for your next set!',
+                            icon: 'info',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true
+                        });
+                        logFormContainer.style.display = 'block';
+                        restTimerUI.style.display = 'none';
+                    }
+                }, 1000);
+            }
         };
         
-        nextSetBtn.addEventListener('click', () => {
-            clearInterval(timerInterval);
-            logFormContainer.style.display = 'block';
-            restTimerUI.style.display = 'none';
+        const nextSetBtn = document.getElementById('next-set-btn');
+        if (nextSetBtn) nextSetBtn.addEventListener('click', () => {
+            const logFormContainer = document.getElementById('log-form-container');
+            const restTimerUI = document.getElementById('rest-timer-ui');
+            if (timerInterval) clearInterval(timerInterval);
+            if (logFormContainer) logFormContainer.style.display = 'block';
+            if (restTimerUI) restTimerUI.style.display = 'none';
         });
 
+        const setsInput = document.getElementById('sets-input');
+        const weightsInput = document.getElementById('weights-input');
+        const repsInput = document.getElementById('reps-input');
+        
+        const settingsForm = document.getElementById('settings-form');
+        if (settingsForm) settingsForm.addEventListener('submit', saveSettings);
+        
         init();
     </script>
 </body>
