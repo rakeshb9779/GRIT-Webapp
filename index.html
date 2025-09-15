@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personal Trainer App</title>
+    <title>Workout Tracker Pro</title>
 
     <!-- Tailwind CSS for modern styling and responsiveness -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -311,9 +311,12 @@
         const pageContents = document.querySelectorAll('.page-content');
         const navLinks = document.querySelectorAll('.nav-item');
         let workoutPlan = [];
-        let completedExercises = [];
+        let completedExercises = {};
         let workoutHistory = [];
         let currentExerciseIndex = 0;
+        let sessionSetsLogged = 0;
+        let sessionRepsCompleted = 0;
+        let sessionVolumeLifted = 0;
         let restTimerDuration = 60;
         let weeklyWorkoutGoal = 3;
         const STORAGE_KEY_COMPLETED = 'completedExercises';
@@ -374,7 +377,7 @@
             if (pageId === 'workout') {
                 const workoutLoadingEl = document.getElementById('workout-loading');
                 if (workoutPlan.length === 0 || workoutPlan[0].exercises.length === 0) {
-                    workoutLoadingEl.textContent = "No workouts found for today.";
+                    if (workoutLoadingEl) workoutLoadingEl.textContent = "No workouts found for today.";
                     return;
                 }
                 renderWorkoutPage();
@@ -482,14 +485,16 @@
             if(exerciseNameEl) exerciseNameEl.textContent = currentExercise;
             if(exerciseNoteEl) exerciseNoteEl.textContent = currentWorkout.note || '';
 
-            const isCompleted = completedExercises.includes(currentExerciseIndex);
+            const setsInput = document.getElementById('sets-input');
+            const nextSet = getNextSetNumber(currentExercise);
+            if(setsInput) setsInput.value = nextSet;
+
+            const isCompleted = completedExercises[currentExerciseIndex] >= 3;
             if(exerciseCard) exerciseCard.classList.toggle('card-done', isCompleted);
             if(addSetBtn) addSetBtn.style.display = isCompleted ? 'flex' : 'none';
 
             displayProgressiveOverload(currentExercise);
             getWorkoutRecommendation(currentExercise);
-            const setsInput = document.getElementById('sets-input');
-            if(setsInput) setsInput.value = getNextSetNumber(currentExercise);
             
             const weightsInput = document.getElementById('weights-input');
             const repsInput = document.getElementById('reps-input');
@@ -574,7 +579,7 @@
             } else {
                 localStorage.setItem(STORAGE_KEY_LAST_SESSION, today);
                 localStorage.setItem('workoutProgress', JSON.stringify({}));
-                completedExercises = [];
+                completedExercises = {};
             }
         };
 
@@ -648,7 +653,7 @@
             const exerciseName = document.getElementById('exercise-name').textContent;
             const weight = parseFloat(document.getElementById('weights-input').value) || 0;
             const reps = parseInt(document.getElementById('reps-input').value) || 0;
-            const sets = getNextSetNumber(exerciseName);
+            const sets = parseInt(document.getElementById('sets-input').value) || 1;
 
             if (weight === 0 || reps === 0) {
                  Swal.fire('Error', 'Please enter a valid weight and number of reps.', 'error');
@@ -659,9 +664,9 @@
             const logSetText = document.getElementById('log-set-text');
             const logSetSpinner = document.getElementById('log-set-spinner');
 
-            logSetBtn.disabled = true;
-            logSetText.textContent = 'Logging...';
-            logSetSpinner.classList.remove('hidden');
+            if(logSetBtn) logSetBtn.disabled = true;
+            if(logSetText) logSetText.textContent = 'Logging...';
+            if(logSetSpinner) logSetSpinner.classList.remove('hidden');
 
             const data = {
                 Date: new Date().toLocaleDateString(),
@@ -702,14 +707,14 @@
                         if (result.isConfirmed) {
                             startRestTimer(restTimerDuration);
                         } else {
-                            renderExerciseCard(); // Rerender to show the next set
+                            renderExerciseCard();
                         }
                     });
                 }
                 
                 const totalSetsPlanned = 3;
-                if (sets >= totalSetsPlanned && !completedExercises.includes(currentExerciseIndex)) {
-                    completedExercises.push(currentExerciseIndex);
+                if (sets >= totalSetsPlanned) {
+                    completedExercises[currentExerciseIndex] = sets;
                     saveExerciseProgress(currentExerciseIndex, sets);
                     
                     const exerciseCard = document.getElementById('exercise-card');
@@ -724,9 +729,14 @@
                 console.error('Error logging data:', error);
                 Swal.fire('Error', 'Failed to log set. Check console for details.', 'error');
             } finally {
-                logSetBtn.disabled = false;
-                logSetText.textContent = 'Log Set';
-                logSetSpinner.classList.add('hidden');
+                if(logSetBtn) logSetBtn.disabled = false;
+                if(logSetText) logSetText.textContent = 'Log Set';
+                if(logSetSpinner) logSetSpinner.classList.add('hidden');
+                
+                const weightsInput = document.getElementById('weights-input');
+                const repsInput = document.getElementById('reps-input');
+                if(weightsInput) weightsInput.value = '';
+                if(repsInput) repsInput.value = '';
             }
         };
         
@@ -776,11 +786,11 @@
 
                 timerInterval = setInterval(() => {
                     remaining--;
-                    timerDisplay.textContent = `0:${remaining.toString().padStart(2, '0')`;
+                    timerDisplay.textContent = `0:${remaining.toString().padStart(2, '0')}`;
 
                     if (remaining <= 0) {
                         clearInterval(timerInterval);
-                        timerPing.play();
+                        if(timerPing) timerPing.play();
                         Swal.fire({
                             title: 'Time\'s Up!',
                             text: 'Rest is over. Get ready for your next set!',
