@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workout  Pro</title>
+    <title>Workout Tracker Pro</title>
 
     <!-- Tailwind CSS for modern styling and responsiveness -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -147,6 +147,7 @@
         
         .card-done {
             opacity: 0.5;
+            pointer-events: none;
             transition: opacity 0.3s ease-in-out;
         }
         
@@ -309,10 +310,47 @@
 
         const pageContents = document.querySelectorAll('.page-content');
         const navLinks = document.querySelectorAll('.nav-item');
+        const startSessionBtn = document.getElementById('start-session-btn');
+        const workoutLoadingEl = document.getElementById('workout-loading');
+        const workoutUIEl = document.getElementById('workout-ui');
+        const dayOfWeekEl = document.getElementById('day-of-week');
+        const exerciseCounterEl = document.getElementById('exercise-counter');
+        const exerciseNameEl = document.getElementById('exercise-name');
+        const exerciseNoteEl = document.getElementById('exercise-note');
+        const historyListEl = document.getElementById('history-list');
+        const logFormContainer = document.getElementById('log-form-container');
+        const logSetBtn = document.getElementById('log-set-btn');
+        const logSetText = document.getElementById('log-set-text');
+        const logSetSpinner = document.getElementById('log-set-spinner');
+        const setsInput = document.getElementById('sets-input');
+        const weightsInput = document.getElementById('weights-input');
+        const repsInput = document.getElementById('reps-input');
+        const restTimerUI = document.getElementById('rest-timer-ui');
+        const timerDisplay = document.getElementById('timer-display');
+        const nextSetBtn = document.getElementById('next-set-btn');
+        const leftNavBtn = document.getElementById('left-nav-btn');
+        const rightNavBtn = document.getElementById('right-nav-btn');
+        const addSetBtn = document.getElementById('add-set-btn');
+        const endSessionBtn = document.getElementById('end-session-btn');
+        const timerPing = document.getElementById('timer-ping');
+
+        const streakCounterEl = document.getElementById('streak-counter');
+        const weeklyProgressEl = document.getElementById('weekly-progress');
+        const volumeChartCanvas = document.getElementById('volume-chart');
+        const settingsForm = document.getElementById('settings-form');
+        const restTimerSettingInput = document.getElementById('rest-timer-setting');
+        const weeklyGoalSettingInput = document.getElementById('weekly-goal-setting');
+        const dietForm = document.getElementById('diet-form');
+        const mealInput = document.getElementById('meal-input');
+        const caloriesInput = document.getElementById('calories-input');
+        const mealHistory = document.getElementById('meal-history');
         let workoutPlan = [];
         let completedExercises = {};
         let workoutHistory = [];
         let currentExerciseIndex = 0;
+        let sessionSetsLogged = 0;
+        let sessionRepsCompleted = 0;
+        let sessionVolumeLifted = 0;
         let restTimerDuration = 60;
         let weeklyWorkoutGoal = 3;
         const STORAGE_KEY_COMPLETED = 'completedExercises';
@@ -320,14 +358,10 @@
         const STORAGE_KEY_STREAK = 'workoutStreak';
         const STORAGE_KEY_LAST_WORKOUT = 'lastWorkoutDate';
         const STORAGE_KEY_SETTINGS = 'appSettings';
+        let chart;
 
         const init = async () => {
             try {
-                const workoutLoadingEl = document.getElementById('workout-loading');
-                if (workoutLoadingEl) {
-                    workoutLoadingEl.textContent = 'Loading data...';
-                }
-                
                 const planResponse = await fetch(WORKOUT_PLAN_URL);
                 if (!planResponse.ok) throw new Error(`Failed to fetch workout plan: ${planResponse.status} - ${planResponse.statusText}`);
                 const planText = await planResponse.text();
@@ -569,11 +603,14 @@
             const lastSessionDate = localStorage.getItem(STORAGE_KEY_LAST_SESSION);
             
             if (lastSessionDate === today) {
-                completedExercises = JSON.parse(localStorage.getItem('completedExercises')) || {};
+                const storedCompleted = localStorage.getItem(STORAGE_KEY_COMPLETED);
+                if (storedCompleted) {
+                    completedExercises = JSON.parse(storedCompleted);
+                }
             } else {
                 localStorage.setItem(STORAGE_KEY_LAST_SESSION, today);
                 completedExercises = {};
-                localStorage.removeItem('completedExercises');
+                localStorage.removeItem(STORAGE_KEY_COMPLETED);
             }
         };
 
@@ -696,7 +733,10 @@
                         if (result.isConfirmed) {
                             startRestTimer(restTimerDuration);
                         } else {
-                            renderExerciseCard();
+                            const nextSetNumber = getNextSetNumber(exerciseName);
+                            setsInput.value = nextSetNumber;
+                            weightsInput.value = '';
+                            repsInput.value = '';
                         }
                     });
                 }
