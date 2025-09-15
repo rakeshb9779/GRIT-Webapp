@@ -826,8 +826,8 @@
                 loadSettings();
                 loadCompletedExercises();
                 loadWorkoutStreak();
+
                 renderDashboard();
-                
                 const initialPage = window.location.hash.substring(1) || 'dashboard';
                 showPage(initialPage);
                 
@@ -993,11 +993,27 @@
                 setEl.className = 'flex justify-between p-2 mb-2';
                 setEl.style.background = 'rgba(0, 245, 255, 0.1)';
                 setEl.style.borderRadius = '8px';
-                setEl.innerHTML = `<span>Set ${set.Sets}: ${set.Reps} reps @ ${set["Weight (kg)"]}kg</span><span>3 days ago</span>`;
+                setEl.innerHTML = `<span>Set ${set.Sets}: ${set.Reps} reps @ ${set["Weight (kg)"]}kg</span><span>${getRelativeTime(set.Date)}</span>`;
                 historyListEl.appendChild(setEl);
             });
         };
         
+        const getRelativeTime = (dateString) => {
+            const today = new Date();
+            const dateParts = dateString.split('/');
+            const day = dateParts[0];
+            const month = dateParts[1] - 1; // Months are 0-indexed
+            const year = dateParts[2];
+            const entryDate = new Date(year, month, day);
+
+            const diffTime = Math.abs(today - entryDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) return 'Today';
+            if (diffDays === 1) return 'Yesterday';
+            return `${diffDays} days ago`;
+        };
+
         const getWorkoutRecommendation = (exerciseName) => {
             const lastSession = workoutHistory.find(entry => entry.Exercise.toLowerCase() === exerciseName.toLowerCase());
             
@@ -1099,58 +1115,66 @@
             }
 
             const data = {
-                Date: new Date().toLocaleDateString(),
+                Date: new Date().toLocaleDateString('en-GB'),
+                Time: new Date().toLocaleTimeString(),
                 Exercise: exerciseName,
                 Sets: sets,
                 Reps: reps,
                 'Weight (kg)': weight,
             };
-
-            // Simulate API call
-            await new Promise(r => setTimeout(r, 1000));
-            workoutHistory.push(data);
             
-            const oldRecords = workoutHistory.filter(entry => entry.Exercise.toLowerCase() === exerciseName.toLowerCase());
-            const highestWeight = oldRecords.reduce((max, entry) => Math.max(max, parseFloat(entry["Weight (kg)"]) || 0), 0);
-            const isNewPR = weight > highestWeight;
-
-            if (isNewPR) {
-                Swal.fire({
-                    title: 'New Personal Record! 🎉',
-                    text: `You lifted ${weight}kg, your new personal best!`,
-                    icon: 'success',
-                    confirmButtonColor: '#00f5ff'
+            try {
+                const payload = { action: 'logWorkout', data: data };
+                await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(payload),
                 });
-            } else {
-                Swal.fire({
-                    title: 'Set Logged!',
-                    text: 'Great work! What\'s next?',
-                    icon: 'success',
-                    showCancelButton: true,
-                    confirmButtonText: 'Start Rest Timer',
-                    cancelButtonText: 'Next Set',
-                    confirmButtonColor: '#00f5ff',
-                    cancelButtonColor: '#39ff14'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        startRestTimer(restTimerDuration);
-                    } else {
-                        renderExerciseCard();
-                    }
-                });
-            }
-            
-            const totalSetsPlanned = 3;
-            if (sets >= totalSetsPlanned) {
-                saveExerciseProgress(currentExerciseIndex, sets);
-                const exerciseCard = document.querySelector('.exercise-card');
-                if (exerciseCard) exerciseCard.classList.add('completed');
-            } else {
-                saveExerciseProgress(currentExerciseIndex, sets);
-            }
+                
+                const oldRecords = workoutHistory.filter(entry => entry.Exercise.toLowerCase() === exerciseName.toLowerCase());
+                const highestWeight = oldRecords.reduce((max, entry) => Math.max(max, parseFloat(entry["Weight (kg)"]) || 0), 0);
+                const isNewPR = weight > highestWeight;
 
-            if (logSetBtn) {
-                logSetBtn.disabled = false;
+                if (isNewPR) {
+                    Swal.fire({
+                        title: 'New Personal Record! 🎉',
+                        text: `You lifted ${weight}kg, your new personal best!`,
+                        icon: 'success',
+                        confirmButtonColor: '#00f5ff'
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Set Logged!',
+                        text: 'Great work! What\'s next?',
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonText: 'Start Rest Timer',
+                        cancelButtonText: 'Next Set',
+                        confirmButtonColor: '#00f5ff',
+                        cancelButtonColor: '#39ff14'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            startRestTimer(restTimerDuration);
+                        } else {
+                            renderExerciseCard();
+                        }
+                    });
+                }
+                
+                const totalSetsPlanned = 3;
+                if (sets >= totalSetsPlanned) {
+                    saveExerciseProgress(currentExerciseIndex, sets);
+                    const exerciseCard = document.querySelector('.exercise-card');
+                    if (exerciseCard) exerciseCard.classList.add('completed');
+                } else {
+                    saveExerciseProgress(currentExerciseIndex, sets);
+                }
+
+            } catch (error) {
+                console.error('Error logging data:', error);
+                Swal.fire('Error', 'Failed to log set. Check console for details.', 'error');
+            } finally {
+                if (logSetBtn) logSetBtn.disabled = false;
                 if (logSetText) logSetText.textContent = 'Log Set';
                 if (logSetSpinner) logSetSpinner.classList.add('hidden');
             }
