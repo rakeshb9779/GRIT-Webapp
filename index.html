@@ -17,16 +17,7 @@
 
     <style>
         :root {
-            --primary-rgb: 56 189 248;
-            --primary-dark-rgb: 37 99 235;
-            --bg-light: 241 245 249;
-            --text-light: 15 23 42;
-            --card-bg-light: rgba(255, 255, 255, 0.5);
-            --card-border-light: rgba(var(--primary-rgb), 0.3);
-            --input-bg-light: rgba(255, 255, 255, 0.8);
-            --input-border-light: rgba(var(--primary-rgb), 0.4);
-            --text-muted-light: 100 116 139;
-            --bg-dark: #0a0a0f;
+            --bg-primary: #0a0a0f;
             --bg-secondary: #111118;
             --bg-tertiary: #1a1a24;
             --bg-quaternary: #242430;
@@ -645,7 +636,7 @@
                             </div>
                         </div>
                         
-                        <div id="recommendation-section" class="text-center mb-6">
+                        <div id="recommendation-section" class="text-center mb-6 hidden">
                             <div class="p-4" style="background: rgba(57, 255, 20, 0.1); border: 1px solid var(--border-secondary); border-radius: var(--border-radius);">
                                 <span style="color: var(--neon-green); font-weight: 600;">
                                     Recommended: <span id="rec-weight">85</span>kg for <span id="rec-reps">12</span> reps
@@ -835,8 +826,8 @@
                 loadSettings();
                 loadCompletedExercises();
                 loadWorkoutStreak();
+
                 renderDashboard();
-                
                 const initialPage = window.location.hash.substring(1) || 'dashboard';
                 showPage(initialPage);
                 
@@ -968,13 +959,13 @@
             if (exerciseNoteEl) exerciseNoteEl.textContent = currentWorkout.note || '';
 
             const setsInput = document.getElementById('sets-input');
-            const nextSet = completedExercises[currentExerciseIndex] ? completedExercises[currentExerciseIndex] + 1 : 1;
+            const nextSet = (completedExercises[currentExerciseIndex] ? completedExercises[currentExerciseIndex] : 0) + 1;
             if(setsInput) setsInput.value = nextSet;
 
-            const isCompleted = completedExercises[currentExerciseIndex] >= 3;
+            const isCompleted = (completedExercises[currentExerciseIndex] ? completedExercises[currentExerciseIndex] : 0) >= 3;
             const exerciseCard = document.getElementById('exercise-card');
-            if (exerciseCard) exerciseCard.classList.toggle('card-done', isCompleted);
-            if (addSetBtn) addSetBtn.style.display = isCompleted ? 'flex' : 'none';
+            if(exerciseCard) exerciseCard.classList.toggle('card-done', isCompleted);
+            if(addSetBtn) addSetBtn.style.display = isCompleted ? 'flex' : 'none';
 
             displayProgressiveOverload(currentExercise);
             getWorkoutRecommendation(currentExercise);
@@ -1056,14 +1047,14 @@
             const settings = JSON.parse(localStorage.getItem(STORAGE_KEY_SETTINGS)) || {};
             restTimerDuration = parseInt(settings.restTimer) || 60;
             weeklyWorkoutGoal = parseInt(settings.weeklyGoal) || 3;
-            if (restTimerSettingInput) restTimerSettingInput.value = restTimerDuration;
-            if (weeklyGoalSettingInput) weeklyGoalSettingInput.value = weeklyWorkoutGoal;
+            if (document.getElementById('rest-timer-setting')) document.getElementById('rest-timer-setting').value = restTimerDuration;
+            if (document.getElementById('weekly-goal-setting')) document.getElementById('weekly-goal-setting').value = weeklyWorkoutGoal;
         };
 
         const saveSettings = (e) => {
             e.preventDefault();
-            const newDuration = parseInt(restTimerSettingInput.value);
-            const newGoal = parseInt(weeklyGoalSettingInput.value);
+            const newDuration = parseInt(document.getElementById('rest-timer-setting').value);
+            const newGoal = parseInt(document.getElementById('weekly-goal-setting').value);
             
             if (newDuration >= 30 && newDuration <= 300 && newGoal >= 1 && newGoal <= 7) {
                 restTimerDuration = newDuration;
