@@ -1,12 +1,10 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workout  Pro</title>
+    <title>Workout Tracker Pro</title>
 
-    <!-- Tailwind CSS for modern styling and responsiveness -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -310,47 +308,10 @@
 
         const pageContents = document.querySelectorAll('.page-content');
         const navLinks = document.querySelectorAll('.nav-item');
-        const startSessionBtn = document.getElementById('start-session-btn');
-        const workoutLoadingEl = document.getElementById('workout-loading');
-        const workoutUIEl = document.getElementById('workout-ui');
-        const dayOfWeekEl = document.getElementById('day-of-week');
-        const exerciseCounterEl = document.getElementById('exercise-counter');
-        const exerciseNameEl = document.getElementById('exercise-name');
-        const exerciseNoteEl = document.getElementById('exercise-note');
-        const historyListEl = document.getElementById('history-list');
-        const logFormContainer = document.getElementById('log-form-container');
-        const logSetBtn = document.getElementById('log-set-btn');
-        const logSetText = document.getElementById('log-set-text');
-        const logSetSpinner = document.getElementById('log-set-spinner');
-        const setsInput = document.getElementById('sets-input');
-        const weightsInput = document.getElementById('weights-input');
-        const repsInput = document.getElementById('reps-input');
-        const restTimerUI = document.getElementById('rest-timer-ui');
-        const timerDisplay = document.getElementById('timer-display');
-        const nextSetBtn = document.getElementById('next-set-btn');
-        const leftNavBtn = document.getElementById('left-nav-btn');
-        const rightNavBtn = document.getElementById('right-nav-btn');
-        const addSetBtn = document.getElementById('add-set-btn');
-        const endSessionBtn = document.getElementById('end-session-btn');
-        const timerPing = document.getElementById('timer-ping');
-
-        const streakCounterEl = document.getElementById('streak-counter');
-        const weeklyProgressEl = document.getElementById('weekly-progress');
-        const volumeChartCanvas = document.getElementById('volume-chart');
-        const settingsForm = document.getElementById('settings-form');
-        const restTimerSettingInput = document.getElementById('rest-timer-setting');
-        const weeklyGoalSettingInput = document.getElementById('weekly-goal-setting');
-        const dietForm = document.getElementById('diet-form');
-        const mealInput = document.getElementById('meal-input');
-        const caloriesInput = document.getElementById('calories-input');
-        const mealHistory = document.getElementById('meal-history');
         let workoutPlan = [];
         let completedExercises = [];
         let workoutHistory = [];
         let currentExerciseIndex = 0;
-        let sessionSetsLogged = 0;
-        let sessionRepsCompleted = 0;
-        let sessionVolumeLifted = 0;
         let restTimerDuration = 60;
         let weeklyWorkoutGoal = 3;
         const STORAGE_KEY_COMPLETED = 'completedExercises';
@@ -358,7 +319,6 @@
         const STORAGE_KEY_STREAK = 'workoutStreak';
         const STORAGE_KEY_LAST_WORKOUT = 'lastWorkoutDate';
         const STORAGE_KEY_SETTINGS = 'appSettings';
-        let chart;
 
         const init = async () => {
             try {
@@ -405,13 +365,14 @@
             window.location.hash = pageId;
 
             if (pageId === 'workout') {
+                const workoutLoadingEl = document.getElementById('workout-loading');
                 if (workoutPlan.length === 0 || workoutPlan[0].exercises.length === 0) {
                     workoutLoadingEl.textContent = "No workouts found for today.";
                     return;
                 }
                 renderWorkoutPage();
             } else if (pageId === 'progress') {
-                renderVolumeChart();
+                //renderVolumeChart();
             } else if (pageId === 'diet') {
                  //renderDietHistory();
             }
@@ -424,6 +385,7 @@
             });
         });
 
+        const startSessionBtn = document.getElementById('start-session-btn');
         if (startSessionBtn) {
             startSessionBtn.addEventListener('click', () => {
                 currentExerciseIndex = 0;
@@ -462,6 +424,7 @@
         const renderDashboard = () => {
             const workoutDaysThisWeek = getWorkoutsThisWeek().length;
             const progress = Math.min(100, Math.round((workoutDaysThisWeek / weeklyWorkoutGoal) * 100));
+            const weeklyProgressEl = document.getElementById('weekly-progress');
             if (weeklyProgressEl) weeklyProgressEl.textContent = `${progress}%`;
         };
 
@@ -480,6 +443,9 @@
         };
 
         const renderWorkoutPage = () => {
+            const workoutLoadingEl = document.getElementById('workout-loading');
+            const workoutUIEl = document.getElementById('workout-ui');
+
             workoutLoadingEl.style.display = 'none';
             workoutUIEl.style.display = 'block';
             if (workoutPlan.length === 0 || workoutPlan[0].exercises.length === 0) {
@@ -490,15 +456,16 @@
         };
 
         const renderExerciseCard = () => {
-            if (workoutPlan.length === 0 || workoutPlan[0].exercises.length === 0) return;
+            const workoutUIEl = document.getElementById('workout-ui');
+            if (!workoutUIEl || workoutPlan.length === 0 || workoutPlan[0].exercises.length === 0) return;
 
             const currentWorkout = workoutPlan[0];
             const currentExercise = currentWorkout.exercises[currentExerciseIndex];
 
-            dayOfWeekEl.textContent = currentWorkout.day;
-            exerciseCounterEl.textContent = `Exercise ${currentExerciseIndex + 1} of ${currentWorkout.exercises.length}`;
-            exerciseNameEl.textContent = currentExercise;
-            exerciseNoteEl.textContent = currentWorkout.note || '';
+            document.getElementById('day-of-week').textContent = currentWorkout.day;
+            document.getElementById('exercise-counter').textContent = `Exercise ${currentExerciseIndex + 1} of ${currentWorkout.exercises.length}`;
+            document.getElementById('exercise-name').textContent = currentExercise;
+            document.getElementById('exercise-note').textContent = currentWorkout.note || '';
 
             const isCompleted = completedExercises.includes(currentExerciseIndex);
             document.getElementById('exercise-card').classList.toggle('card-done', isCompleted);
@@ -506,12 +473,14 @@
 
             displayProgressiveOverload(currentExercise);
             getWorkoutRecommendation(currentExercise);
-            setsInput.value = 1;
+            setsInput.value = getNextSetNumber(currentExercise);
             weightsInput.value = '';
             repsInput.value = '';
         };
         
         const displayProgressiveOverload = (exerciseName) => {
+            const historyListEl = document.getElementById('history-list');
+            if (!historyListEl) return;
             historyListEl.innerHTML = '';
             const recentSets = workoutHistory
                 .filter(entry => entry.Exercise && entry.Exercise.trim().toLowerCase() === exerciseName.trim().toLowerCase())
@@ -557,37 +526,59 @@
             renderExerciseCard();
         };
 
+        const leftNavBtn = document.getElementById('left-nav-btn');
+        const rightNavBtn = document.getElementById('right-nav-btn');
         if (leftNavBtn) leftNavBtn.addEventListener('click', () => navigateExercises('left'));
         if (rightNavBtn) rightNavBtn.addEventListener('click', () => navigateExercises('right'));
+
+        const getNextSetNumber = (exerciseName) => {
+            const today = new Date().toLocaleDateString();
+            const exerciseSets = workoutHistory.filter(entry => {
+                const entryDate = new Date(entry.Date).toLocaleDateString();
+                return entry.Exercise.trim().toLowerCase() === exerciseName.trim().toLowerCase() && entryDate === today;
+            });
+            return exerciseSets.length + 1;
+        };
 
         const loadCompletedExercises = () => {
             const today = new Date().toLocaleDateString();
             const lastSessionDate = localStorage.getItem(STORAGE_KEY_LAST_SESSION);
+            const savedProgress = JSON.parse(localStorage.getItem('workoutProgress')) || {};
 
             if (lastSessionDate === today) {
-                const storedCompleted = localStorage.getItem(STORAGE_KEY_COMPLETED);
-                if (storedCompleted) {
-                    completedExercises = JSON.parse(storedCompleted);
-                }
+                const todayProgress = savedProgress[today] || {};
+                completedExercises = Object.keys(todayProgress).filter(key => todayProgress[key] >= 3).map(Number);
             } else {
                 localStorage.setItem(STORAGE_KEY_LAST_SESSION, today);
+                localStorage.setItem('workoutProgress', JSON.stringify({}));
                 completedExercises = [];
-                localStorage.removeItem(STORAGE_KEY_COMPLETED);
             }
+        };
+
+        const saveExerciseProgress = (exerciseIndex, setsCompleted) => {
+            const today = new Date().toLocaleDateString();
+            const savedProgress = JSON.parse(localStorage.getItem('workoutProgress')) || {};
+            if (!savedProgress[today]) {
+                savedProgress[today] = {};
+            }
+            savedProgress[today][exerciseIndex] = setsCompleted;
+            localStorage.setItem('workoutProgress', JSON.stringify(savedProgress));
         };
 
         const loadSettings = () => {
             const settings = JSON.parse(localStorage.getItem(STORAGE_KEY_SETTINGS)) || {};
             restTimerDuration = parseInt(settings.restTimer) || 60;
             weeklyWorkoutGoal = parseInt(settings.weeklyGoal) || 3;
+            const restTimerSettingInput = document.getElementById('rest-timer-setting');
+            const weeklyGoalSettingInput = document.getElementById('weekly-goal-setting');
             if (restTimerSettingInput) restTimerSettingInput.value = restTimerDuration;
             if (weeklyGoalSettingInput) weeklyGoalSettingInput.value = weeklyWorkoutGoal;
         };
 
         const saveSettings = (e) => {
             e.preventDefault();
-            const newDuration = parseInt(restTimerSettingInput.value);
-            const newGoal = parseInt(weeklyGoalSettingInput.value);
+            const newDuration = parseInt(document.getElementById('rest-timer-setting').value);
+            const newGoal = parseInt(document.getElementById('weekly-goal-setting').value);
             
             if (newDuration >= 30 && newDuration <= 300 && newGoal >= 1 && newGoal <= 7) {
                 restTimerDuration = newDuration;
@@ -621,24 +612,24 @@
                 }
             }
             localStorage.setItem(STORAGE_KEY_STREAK, streak);
+            const streakCounterEl = document.getElementById('streak-counter');
             if (streakCounterEl) streakCounterEl.textContent = streak;
         };
         
-        let volumeChart;
-        const renderVolumeChart = () => {};
-        const renderDietHistory = () => {};
-        const handleLogMeal = async (e) => {};
-        
         const handleLogSet = async () => {
-            const exerciseName = exerciseNameEl.textContent;
-            const weight = parseFloat(weightsInput.value) || 0;
-            const reps = parseInt(repsInput.value) || 0;
-            const sets = parseInt(setsInput.value) || 1;
+            const exerciseName = document.getElementById('exercise-name').textContent;
+            const weight = parseFloat(document.getElementById('weights-input').value) || 0;
+            const reps = parseInt(document.getElementById('reps-input').value) || 0;
+            const sets = getNextSetNumber(exerciseName);
 
             if (weight === 0 || reps === 0) {
                  Swal.fire('Error', 'Please enter a valid weight and number of reps.', 'error');
                 return;
             }
+
+            const logSetBtn = document.getElementById('log-set-btn');
+            const logSetText = document.getElementById('log-set-text');
+            const logSetSpinner = document.getElementById('log-set-spinner');
 
             logSetBtn.disabled = true;
             logSetText.textContent = 'Logging...';
@@ -683,7 +674,7 @@
                         if (result.isConfirmed) {
                             startRestTimer(restTimerDuration);
                         } else {
-                            setsInput.value = parseInt(setsInput.value) + 1;
+                            setsInput.value = sets + 1;
                             weightsInput.value = '';
                             repsInput.value = '';
                         }
@@ -693,10 +684,12 @@
                 const totalSetsPlanned = 3;
                 if (sets >= totalSetsPlanned && !completedExercises.includes(currentExerciseIndex)) {
                     completedExercises.push(currentExerciseIndex);
-                    localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(completedExercises));
+                    saveExerciseProgress(currentExerciseIndex, sets);
                     
                     document.getElementById('exercise-card').classList.add('card-done');
-                    addSetBtn.style.display = 'flex';
+                    document.getElementById('add-set-btn').style.display = 'flex';
+                } else {
+                    saveExerciseProgress(currentExerciseIndex, sets);
                 }
 
             } catch (error) {
@@ -707,20 +700,23 @@
                 logSetText.textContent = 'Log Set';
                 logSetSpinner.classList.add('hidden');
                 
-                setsInput.value = parseInt(setsInput.value) + 1;
+                setsInput.value = getNextSetNumber(exerciseName);
                 weightsInput.value = '';
                 repsInput.value = '';
             }
         };
         
-        if(logSetBtn) logSetBtn.addEventListener('click', handleLogSet);
-
-        if(addSetBtn) addSetBtn.addEventListener('click', () => {
+        const logSetBtn = document.getElementById('log-set-btn');
+        if (logSetBtn) logSetBtn.addEventListener('click', handleLogSet);
+        
+        const addSetBtn = document.getElementById('add-set-btn');
+        if (addSetBtn) addSetBtn.addEventListener('click', () => {
             document.getElementById('exercise-card').classList.remove('card-done');
             addSetBtn.style.display = 'none';
         });
 
-        if(endSessionBtn) endSessionBtn.addEventListener('click', async () => {
+        const endSessionBtn = document.getElementById('end-session-btn');
+        if (endSessionBtn) endSessionBtn.addEventListener('click', async () => {
             const result = await Swal.fire({
                 title: 'End Session?',
                 text: "Are you sure you want to end your workout? Your progress for today will be saved.",
@@ -742,38 +738,55 @@
         
         let timerInterval;
         const startRestTimer = (seconds) => {
-            logFormContainer.style.display = 'none';
-            restTimerUI.style.display = 'block';
-            let remaining = seconds;
-            timerDisplay.textContent = `0:${remaining.toString().padStart(2, '0')}`;
+            const logFormContainer = document.getElementById('log-form-container');
+            const restTimerUI = document.getElementById('rest-timer-ui');
+            const timerDisplay = document.getElementById('timer-display');
+            const timerPing = document.getElementById('timer-ping');
 
-            timerInterval = setInterval(() => {
-                remaining--;
+            if (logFormContainer && restTimerUI) {
+                logFormContainer.style.display = 'none';
+                restTimerUI.style.display = 'block';
+                let remaining = seconds;
                 timerDisplay.textContent = `0:${remaining.toString().padStart(2, '0')}`;
 
-                if (remaining <= 0) {
-                    clearInterval(timerInterval);
-                    timerPing.play();
-                    Swal.fire({
-                        title: 'Time\'s Up!',
-                        text: 'Rest is over. Get ready for your next set!',
-                        icon: 'info',
-                        showConfirmButton: false,
-                        timer: 2000,
-                        timerProgressBar: true
-                    });
-                    logFormContainer.style.display = 'block';
-                    restTimerUI.style.display = 'none';
-                }
-            }, 1000);
+                timerInterval = setInterval(() => {
+                    remaining--;
+                    timerDisplay.textContent = `0:${remaining.toString().padStart(2, '0')}`;
+
+                    if (remaining <= 0) {
+                        clearInterval(timerInterval);
+                        timerPing.play();
+                        Swal.fire({
+                            title: 'Time\'s Up!',
+                            text: 'Rest is over. Get ready for your next set!',
+                            icon: 'info',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true
+                        });
+                        logFormContainer.style.display = 'block';
+                        restTimerUI.style.display = 'none';
+                    }
+                }, 1000);
+            }
         };
         
-        if(nextSetBtn) nextSetBtn.addEventListener('click', () => {
-            clearInterval(timerInterval);
-            logFormContainer.style.display = 'block';
-            restTimerUI.style.display = 'none';
+        const nextSetBtn = document.getElementById('next-set-btn');
+        if (nextSetBtn) nextSetBtn.addEventListener('click', () => {
+            const logFormContainer = document.getElementById('log-form-container');
+            const restTimerUI = document.getElementById('rest-timer-ui');
+            if (timerInterval) clearInterval(timerInterval);
+            if (logFormContainer) logFormContainer.style.display = 'block';
+            if (restTimerUI) restTimerUI.style.display = 'none';
         });
 
+        const setsInput = document.getElementById('sets-input');
+        const weightsInput = document.getElementById('weights-input');
+        const repsInput = document.getElementById('reps-input');
+        
+        const settingsForm = document.getElementById('settings-form');
+        if (settingsForm) settingsForm.addEventListener('submit', saveSettings);
+        
         init();
     </script>
 </body>
