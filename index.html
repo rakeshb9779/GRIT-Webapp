@@ -1,12 +1,10 @@
-<!-- NeoFit_Project_Alpha.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NeoFit Pro - Cyberpunk Workout Tracker</title>
+    <title>Workout Tracker Pro</title>
 
-    <!-- Tailwind CSS for modern styling and responsiveness -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -571,7 +569,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Dashboard Page -->
         <div id="dashboard-page" class="page-content active">
             <div class="glass-card text-center">
                 <h1 class="text-4xl font-bold mb-2">
@@ -604,7 +601,6 @@
             </div>
         </div>
 
-        <!-- Workout Page -->
         <div id="workout-page" class="page-content hidden">
             <div id="workout-loading" class="glass-card text-center p-8">
                 <div class="loader mb-4"></div>
@@ -636,7 +632,7 @@
                             </div>
                         </div>
                         
-                        <div id="recommendation-section" class="text-center mb-6">
+                        <div id="recommendation-section" class="text-center mb-6 hidden">
                             <div class="p-4" style="background: rgba(57, 255, 20, 0.1); border: 1px solid var(--border-secondary); border-radius: var(--border-radius);">
                                 <span style="color: var(--neon-green); font-weight: 600;">
                                     Recommended: <span id="rec-weight">85</span>kg for <span id="rec-reps">12</span> reps
@@ -685,7 +681,6 @@
             </div>
         </div>
 
-        <!-- Diet Page -->
         <div id="diet-page" class="page-content hidden">
             <div class="glass-card text-center p-8">
                 <i data-lucide="utensils" class="w-16 h-16 mx-auto mb-4" style="color: var(--neon-orange);"></i>
@@ -697,7 +692,6 @@
             </div>
         </div>
         
-        <!-- Progress Page -->
         <div id="progress-page" class="page-content hidden">
             <div class="glass-card text-center p-8">
                 <i data-lucide="bar-chart-2" class="w-16 h-16 mx-auto mb-4" style="color: var(--neon-purple);"></i>
@@ -709,7 +703,6 @@
             </div>
         </div>
         
-        <!-- Settings Page -->
         <div id="settings-page" class="page-content hidden">
             <div class="glass-card p-8">
                 <h2 class="text-2xl font-bold mb-6" style="color: var(--text-accent);">Settings</h2>
@@ -734,7 +727,6 @@
         </div>
     </div>
 
-    <!-- Bottom Navigation -->
     <nav class="nav-container">
         <div class="nav-content">
             <a href="#dashboard" class="nav-item active" data-page="dashboard">
@@ -826,8 +818,8 @@
                 loadSettings();
                 loadCompletedExercises();
                 loadWorkoutStreak();
+
                 renderDashboard();
-                
                 const initialPage = window.location.hash.substring(1) || 'dashboard';
                 showPage(initialPage);
                 
@@ -1004,6 +996,7 @@
                 const lastWeight = parseFloat(lastSession["Weight (kg)"]) || 0;
                 const lastReps = parseInt(lastSession.Reps) || 0;
                 const recommendedReps = lastReps >= 8 ? lastReps + 1 : 12;
+                const recommendedWeight = lastWeight;
 
                 if (document.getElementById('rec-weight')) document.getElementById('rec-weight').textContent = lastWeight;
                 if (document.getElementById('rec-reps')) document.getElementById('rec-reps').textContent = recommendedReps;
@@ -1076,7 +1069,21 @@
         };
         
         const loadWorkoutStreak = () => {
-            const streak = parseInt(localStorage.getItem(STORAGE_KEY_STREAK)) || 7;
+            const today = new Date();
+            const lastWorkoutDate = localStorage.getItem(STORAGE_KEY_LAST_WORKOUT);
+            let streak = parseInt(localStorage.getItem(STORAGE_KEY_STREAK)) || 0;
+
+            if (lastWorkoutDate) {
+                const lastDate = new Date(lastWorkoutDate);
+                const diffDays = Math.ceil((today - lastDate) / (1000 * 60 * 60 * 24));
+                if (diffDays === 1) {
+                    streak++;
+                } else if (diffDays > 1) {
+                    streak = 0;
+                }
+            }
+            localStorage.setItem(STORAGE_KEY_STREAK, streak);
+            const streakCounterEl = document.getElementById('streak-counter');
             if (streakCounterEl) streakCounterEl.textContent = streak;
         };
         
@@ -1099,21 +1106,21 @@
 
             const data = {
                 Date: new Date().toLocaleDateString('en-GB'),
-                Time: new Date().toLocaleTimeString(),
+                Time: new Date().toLocaleTimeString('en-GB'),
                 Exercise: exerciseName,
                 Sets: sets,
                 Reps: reps,
                 'Weight (kg)': weight,
             };
-
+            
             try {
                 const payload = { action: 'logWorkout', data: data };
-                const response = await fetch(APPS_SCRIPT_URL, {
+                await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
                     body: JSON.stringify(payload),
                 });
-                
+
                 const oldRecords = workoutHistory.filter(entry => entry.Exercise.toLowerCase() === exerciseName.toLowerCase());
                 const highestWeight = oldRecords.reduce((max, entry) => Math.max(max, parseFloat(entry["Weight (kg)"]) || 0), 0);
                 const isNewPR = weight > highestWeight;
@@ -1132,7 +1139,7 @@
                         icon: 'success',
                         showCancelButton: true,
                         confirmButtonText: 'Start Rest Timer',
-                        cancelButtonText: 'Next Set',
+                        cancelButtonText: 'Log Next Set',
                         confirmButtonColor: '#00f5ff',
                         cancelButtonColor: '#39ff14'
                     }).then((result) => {
@@ -1148,7 +1155,7 @@
                 if (sets >= totalSetsPlanned) {
                     saveExerciseProgress(currentExerciseIndex, sets);
                     const exerciseCard = document.querySelector('.exercise-card');
-                    if (exerciseCard) exerciseCard.classList.add('completed');
+                    if(exerciseCard) exerciseCard.classList.add('completed');
                 } else {
                     saveExerciseProgress(currentExerciseIndex, sets);
                 }
