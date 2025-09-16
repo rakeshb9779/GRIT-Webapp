@@ -632,7 +632,7 @@
                             </div>
                         </div>
                         
-                        <div id="recommendation-section" class="text-center mb-6">
+                        <div id="recommendation-section" class="text-center mb-6 hidden">
                             <div class="p-4" style="background: rgba(57, 255, 20, 0.1); border: 1px solid var(--border-secondary); border-radius: var(--border-radius);">
                                 <span style="color: var(--neon-green); font-weight: 600;">
                                     Recommended: <span id="rec-weight">85</span>kg for <span id="rec-reps">12</span> reps
@@ -793,13 +793,13 @@
         const nextSetBtn = document.getElementById('next-set-btn');
         const leftNavBtn = document.getElementById('left-nav-btn');
         const rightNavBtn = document.getElementById('right-nav-btn');
-        const addSetBtn = document.getElementById('add-set-btn');
         const endSessionBtn = document.getElementById('end-session-btn');
         const saveSettingsBtn = document.getElementById('save-settings-btn');
         const restTimerSettingInput = document.getElementById('rest-timer-setting');
         const weeklyGoalSettingInput = document.getElementById('weekly-goal-setting');
         const streakCounterEl = document.getElementById('streak-counter');
         const weeklyProgressEl = document.getElementById('weekly-progress');
+        const addSetBtn = document.getElementById('add-set-btn');
 
         const init = async () => {
             try {
@@ -984,25 +984,9 @@
 
             recentSets.forEach(set => {
                 const setEl = document.createElement('p');
-                setEl.textContent = `Set ${set.Sets}: ${set.Reps} reps @ ${set["Weight (kg)"]}kg - ${getRelativeTime(set.Date)}`;
+                setEl.textContent = `Set ${set.Sets}: ${set.Reps} reps @ ${set["Weight (kg)"]}kg`;
                 historyListEl.appendChild(setEl);
             });
-        };
-        
-        const getRelativeTime = (dateString) => {
-            const today = new Date();
-            const dateParts = dateString.split('/');
-            const day = dateParts[0];
-            const month = dateParts[1] - 1;
-            const year = dateParts[2];
-            const entryDate = new Date(year, month, day);
-
-            const diffTime = Math.abs(today - entryDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            
-            if (diffDays === 0) return 'Today';
-            if (diffDays === 1) return 'Yesterday';
-            return `${diffDays} days ago`;
         };
         
         const getWorkoutRecommendation = (exerciseName) => {
@@ -1140,7 +1124,7 @@
                         icon: 'success',
                         showCancelButton: true,
                         confirmButtonText: 'Start Rest Timer',
-                        cancelButtonText: 'Log Next Set',
+                        cancelButtonText: 'Next Set',
                         confirmButtonColor: '#00f5ff',
                         cancelButtonColor: '#39ff14'
                     }).then((result) => {
