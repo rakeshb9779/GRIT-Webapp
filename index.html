@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> - Cyberpunk Workout Tracker</title>
+    <title>Workout Tracker Pro</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -632,7 +632,7 @@
                             </div>
                         </div>
                         
-                        <div id="recommendation-section" class="text-center mb-6 hidden">
+                        <div id="recommendation-section" class="text-center mb-6">
                             <div class="p-4" style="background: rgba(57, 255, 20, 0.1); border: 1px solid var(--border-secondary); border-radius: var(--border-radius);">
                                 <span style="color: var(--neon-green); font-weight: 600;">
                                     Recommended: <span id="rec-weight">85</span>kg for <span id="rec-reps">12</span> reps
@@ -984,7 +984,10 @@
 
             recentSets.forEach(set => {
                 const setEl = document.createElement('p');
-                setEl.textContent = `Set ${set.Sets}: ${set.Reps} reps @ ${set["Weight (kg)"]}kg`;
+                const date = new Date(set.Date);
+                const timeDiff = Math.round((new Date() - date) / (1000 * 60 * 60 * 24));
+                const timeAgo = timeDiff === 0 ? 'Today' : `${timeDiff} days ago`;
+                setEl.textContent = `Set ${set.Sets}: ${set.Reps} reps @ ${set["Weight (kg)"]}kg - ${timeAgo}`;
                 historyListEl.appendChild(setEl);
             });
         };
@@ -1091,7 +1094,7 @@
 
             const data = {
                 Date: new Date().toLocaleDateString('en-GB'),
-                Time: new Date().toLocaleTimeString(),
+                Time: new Date().toLocaleTimeString('en-GB'),
                 Exercise: exerciseName,
                 Sets: sets,
                 Reps: reps,
@@ -1119,12 +1122,12 @@
                     });
                 } else {
                     Swal.fire({
-                        title: 'Set Logged!',
+                        title: 'Set logged!',
                         text: 'Great work! What\'s next?',
                         icon: 'success',
                         showCancelButton: true,
                         confirmButtonText: 'Start Rest Timer',
-                        cancelButtonText: 'Next Set',
+                        cancelButtonText: 'Log Next Set',
                         confirmButtonColor: '#00f5ff',
                         cancelButtonColor: '#39ff14'
                     }).then((result) => {
@@ -1181,6 +1184,7 @@
             const logFormContainer = document.getElementById('log-form-container');
             const restTimerUI = document.getElementById('rest-timer-ui');
             const timerDisplay = document.getElementById('timer-display');
+            const timerPing = document.getElementById('timer-ping');
 
             if (logFormContainer && restTimerUI) {
                 logFormContainer.classList.add('hidden');
@@ -1198,7 +1202,7 @@
                         if(timerPing) timerPing.play();
                         Swal.fire({
                             title: 'Time\'s Up!',
-                            text: 'Rest is over. Ready for your next set!',
+                            text: 'Rest is over. Get ready for your next set!',
                             icon: 'info',
                             showConfirmButton: false,
                             timer: 2000,
